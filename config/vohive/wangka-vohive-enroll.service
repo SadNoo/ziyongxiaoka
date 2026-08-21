@@ -1,0 +1,27 @@
+[Unit]
+Description=Enroll the onboard QMI modem into VoHive
+After=vohive.service
+Requires=vohive.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wangka-vohive-enroll --timeout 180
+Restart=on-failure
+RestartSec=15s
+RemainAfterExit=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

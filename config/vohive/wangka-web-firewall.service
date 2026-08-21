@@ -1,0 +1,15 @@
+[Unit]
+Description=Restrict VoHive to the local USB and Wi-Fi management networks
+Requires=wangka-network-ready.service
+After=wangka-network-ready.service
+Before=vohive.service
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/sbin/nft delete table inet wangka_web
+ExecStart=/usr/sbin/nft -f /etc/nftables.d/wangka-web.nft
+ExecStop=-/usr/sbin/nft delete table inet wangka_web
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

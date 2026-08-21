@@ -1,0 +1,39 @@
+#!/usr/bin/expect -f
+
+set timeout 120
+if {$argc != 2} {
+    puts stderr "usage: scp-from-device.expect REMOTE_PATH LOCAL_PATH"
+    exit 2
+}
+if {![info exists env(WANGKA_USER_PASSWORD)]} {
+    puts stderr "WANGKA_USER_PASSWORD is not set"
+    exit 2
+}
+
+set remote_path [lindex $argv 0]
+set local_path [lindex $argv 1]
+set password $env(WANGKA_USER_PASSWORD)
+
+spawn scp \
+    -o ConnectTimeout=10 \
+    -o StrictHostKeyChecking=accept-new \
+    -o UserKnownHostsFile=/private/tmp/wangka-known-hosts \
+    -o PreferredAuthentications=password \
+    -o PubkeyAuthentication=no \
+    -- user@192.168.5.1:$remote_path $local_path
+
+expect {
+    -re {(?i)password:} {
+        send -- "$password\r"
+        exp_continue
+    }
+    timeout {
+        puts stderr "scp timed out"
+        exit 124
+    }
+    eof
+}
+
+catch wait result
+set exit_code [lindex $result 3]
+exit $exit_code

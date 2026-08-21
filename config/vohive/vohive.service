@@ -1,0 +1,38 @@
+[Unit]
+Description=VoHive local Web SMS manager
+Documentation=https://github.com/jikdarren/vohive
+After=network-online.target ModemManager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/var/lib/vohive
+ExecStart=/usr/local/sbin/vohive -c /etc/vohive/config.yaml
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+UMask=0077
+
+# VoHive must read the Qualcomm WWAN nodes and persist its database/config.
+# Keep all other filesystem locations read-only and block common escalation
+# paths without hiding /dev or /sys, which discovery needs.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/vohive /var/lib/vohive /var/log/vohive
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

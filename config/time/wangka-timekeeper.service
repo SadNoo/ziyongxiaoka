@@ -1,0 +1,14 @@
+[Unit]
+Description=Restore and preserve the last trusted Wangka system time
+DefaultDependencies=no
+After=local-fs.target
+Before=sysinit.target time-set.target time-sync.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wangka-timekeeper load
+ExecStop=/usr/local/sbin/wangka-timekeeper save
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

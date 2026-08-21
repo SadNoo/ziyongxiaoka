@@ -1,0 +1,16 @@
+[Unit]
+Description=Bring up the UFI103S USB and Wi-Fi management networks
+Requires=NetworkManager.service usb-gadget.service
+Wants=msm-firmware-loader.service
+After=NetworkManager.service usb-gadget.service msm-firmware-loader.service
+Before=wangka-web-firewall.service wangka-web-proxy.socket vohive.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wangka-network-ready
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

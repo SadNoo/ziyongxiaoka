@@ -1,0 +1,41 @@
+server:
+  # The VoHive backend is loopback-only by firewall policy. Public management
+  # ports 80 and 7575 are owned by the Wangka policy proxy.
+  port: 17575
+  debug: false
+
+web:
+  username: "__WANGKA_VOHIVE_USERNAME__"
+  password: "__WANGKA_VOHIVE_PASSWORD__"
+
+# A QMI device is discovered and enrolled through the local Web UI/API.
+# Runtime paths are deliberately not persisted because /dev/wwan* numbering
+# can change.  Once enrolled, VoHive stores only the stable device identity.
+devices: []
+
+proxy:
+  instances: []
+
+vowifi:
+  enabled: false
+
+telegram:
+  enabled: false
+
+feishu:
+  enabled: false
+
+qq:
+  enabled: false
+
+webhook:
+  enabled: false
+
+bark:
+  enabled: false
+
+email:
+  enabled: false
+
+pushplus:
+  enabled: false

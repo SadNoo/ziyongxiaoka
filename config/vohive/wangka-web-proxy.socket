@@ -1,0 +1,15 @@
+[Unit]
+Description=VoHive port-free local management sockets
+Requires=wangka-network-ready.service
+After=wangka-network-ready.service
+
+[Socket]
+ListenStream=192.168.4.1:80
+ListenStream=192.168.5.1:80
+ListenStream=192.168.4.1:7575
+ListenStream=192.168.5.1:7575
+FreeBind=yes
+NoDelay=yes
+
+[Install]
+WantedBy=multi-user.target

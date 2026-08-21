@@ -1,0 +1,7 @@
+[Unit]
+Description=Save the current Wangka system time
+After=time-set.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wangka-timekeeper save

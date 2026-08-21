@@ -1,0 +1,28 @@
+[Unit]
+Description=Wangka protected VoHive management portal
+After=vohive.service
+Requires=vohive.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/sbin/wangka-management-proxy --socket-activation
+Restart=on-failure
+RestartSec=3s
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=true
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+ReadWritePaths=/etc /var/lib/wangka-management
+LimitNOFILE=4096

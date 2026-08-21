@@ -1,0 +1,24 @@
+# Device dumps may contain modem NV data, SIM-related identifiers and other
+# device-unique information. Keep them local and out of version control.
+backups/
+
+# Internal implementation notes and validation records stay local. The public
+# repository intentionally publishes README.md as its only documentation.
+docs/
+
+# Downloaded firmware and generated images are large and may have separate
+# redistribution licenses.
+downloads/
+build/
+artifacts/
+tools/
+.venv/
+
+# Local logs and credentials for optional SMS forwarding destinations.
+logs/
+.env
+*.secret
+*.pem
+*.key
+
+.DS_Store

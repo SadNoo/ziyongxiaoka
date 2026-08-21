@@ -1,0 +1,14 @@
+table inet wangka_web {
+    chain input {
+        type filter hook input priority filter; policy accept;
+
+        # 80/7575 are protected proxy listeners. The raw VoHive backend on
+        # 17575 is reachable only from loopback, so LAN clients cannot bypass
+        # the uninstall block or onboarding gate.
+        iifname "lo" tcp dport { 7575, 17575 } accept
+        iifname "wlan0" ip saddr 192.168.4.0/24 tcp dport 7575 accept
+        iifname "usb0" ip saddr 192.168.5.0/24 tcp dport 7575 accept
+        tcp dport 7575 drop
+        tcp dport 17575 drop
+    }
+}
