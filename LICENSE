@@ -1,0 +1,43 @@
+Wangka / ziyongxiaoka Multi-License Notice
+
+Copyright 2026 SadNoo
+
+This repository contains original project material and third-party
+components under different licenses. No license in this repository changes
+or replaces the license of a third-party component.
+
+1. Original project material
+
+Unless a file or directory carries a different notice, the original material
+in the repository root, config/, scripts/, src/, and tests/ is licensed under
+the PolyForm Noncommercial License 1.0.0. The complete terms are in:
+
+    LICENSES/PolyForm-Noncommercial-1.0.0.txt
+
+Required Notice: Copyright 2026 SadNoo (https://github.com/SadNoo)
+
+This grant permits use, modification, and distribution only for purposes
+allowed by those terms. In particular, it does not grant commercial-use
+rights.
+
+2. Third-party components
+
+The following paths are not relicensed as original project material:
+
+- vendor/vohive/vohive_v1.5.5-10-gf9eb85d_linux_arm64: PolyForm
+  Noncommercial License 1.0.0, with the upstream Required Notice preserved
+  in vendor/vohive/LICENSE.
+- vendor/gadget-tools/gt: Apache License 2.0.
+- vendor/gadget-tools/libusbgx.so.2.0.0: GNU Lesser General Public License
+  version 2.1 or later.
+
+Complete third-party license texts, source references, hashes, and notices
+are provided in LICENSES/, THIRD_PARTY_NOTICES.md, and the corresponding
+vendor/ directories.
+
+3. Priority of notices
+
+If a file contains its own copyright or license notice, that notice controls
+for that file. This top-level notice only maps the applicable licenses; it
+does not claim ownership of third-party code, binaries, trademarks, device
+firmware, or hardware designs.

@@ -99,7 +99,7 @@ sudo -i
 
 ## 致谢与引用
 
-这个项目是在以下开源项目和社区工作的基础上完成的：
+这个项目是在以下公开源码、开源项目和社区工作的基础上完成的：
 
 - [OpenStick](https://github.com/OpenStick/OpenStick)
 - [OpenStick Builder](https://github.com/kinsamanka/OpenStick-Builder)
@@ -108,6 +108,6 @@ sudo -i
 - [EDL](https://github.com/bkerler/edl)
 - [ModemManager](https://github.com/linux-mobile-broadband/ModemManager) 与 [libqmi](https://gitlab.freedesktop.org/mobile-broadband/libqmi)
 - [VoHive](https://github.com/jikdarren/vohive) 及本项目固定使用的 [overlook940/vohive-release](https://github.com/overlook940/vohive-release)
-- [libusbgx](https://github.com/libusbgx/libusbgx) 与 gadget-tools
+- [libusbgx](https://github.com/linux-usb-gadgets/libusbgx) 与 [gadget-tool](https://github.com/linux-usb-gadgets/gt)
 
-VoHive 固定二进制使用 PolyForm Noncommercial License 1.0.0，来源、版本、哈希和许可文件保存在 `vendor/vohive/`。第三方项目仍遵循各自许可证，本仓库的公开不代表改变其授权范围。
+本仓库采用多许可证：项目原创脚本、配置和源码使用 PolyForm Noncommercial License 1.0.0，仅授权许可范围内的非商业使用；VoHive 保留同一非商业许可和上游 Required Notice；`gt` 使用 Apache-2.0，`libusbgx` 使用 LGPL-2.1-or-later。完整范围、来源、固定版本和哈希见根目录 `LICENSE`、`THIRD_PARTY_NOTICES.md` 与 `LICENSES/`。第三方项目仍遵循各自许可证，本仓库的公开不代表改变其授权范围。
