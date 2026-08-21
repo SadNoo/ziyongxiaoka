@@ -50,6 +50,7 @@ mv "${SHADOW_TMP}" "${ROOTFS}/etc/shadow"
 
 install -d -m 0700 \
     "${ROOTFS}/etc/vohive" \
+    "${ROOTFS}/etc/wangka" \
     "${ROOTFS}/var/lib/vohive/data" \
     "${ROOTFS}/var/lib/vohive/logs" \
     "${ROOTFS}/var/lib/wangka-management"
@@ -60,6 +61,7 @@ install -d -m 0755 \
     "${ROOTFS}/usr/lib/wangka" \
     "${ROOTFS}/usr/local/sbin" \
     "${ROOTFS}/usr/share/doc/vohive"
+install -d -m 0755 "${ROOTFS}/var/lib/wangka-network"
 
 install -m 0755 "${VOHIVE_BINARY}" "${ROOTFS}/usr/local/sbin/vohive"
 install -m 0755 "${VOHIVE_BINARY}" "${ROOTFS}/usr/lib/wangka/vohive"
@@ -71,11 +73,15 @@ install -m 0755 "${VOHIVE_DIR}/wangka-vohive-maintenance.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-vohive"
 install -m 0755 "${NETWORK_DIR}/wangka-network-ready.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-network-ready"
+install -m 0755 "${NETWORK_DIR}/wangka-uplink-manager.py" \
+    "${ROOTFS}/usr/local/sbin/wangka-uplink"
 install -m 0755 "${TIME_DIR}/wangka-timekeeper.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-timekeeper"
 rm -f "${ROOTFS}/etc/NetworkManager/dispatcher.d/90-wangka-management-alias"
 install -m 0644 "${VOHIVE_DIR}/wangka-web.nft" \
     "${ROOTFS}/etc/nftables.d/wangka-web.nft"
+install -m 0644 "${NETWORK_DIR}/wangka-host-uplink.nft" \
+    "${ROOTFS}/etc/nftables.d/wangka-host-uplink.nft"
 install -m 0644 "${PROJECT_ROOT}/vendor/vohive/LICENSE" \
     "${ROOTFS}/usr/share/doc/vohive/LICENSE"
 
@@ -90,6 +96,9 @@ for unit in \
 done
 install -m 0644 "${NETWORK_DIR}/wangka-network-ready.service" \
     "${ROOTFS}/etc/systemd/system/wangka-network-ready.service"
+for unit in wangka-uplink-reconcile.service wangka-uplink-reconcile.timer; do
+    install -m 0644 "${NETWORK_DIR}/${unit}" "${ROOTFS}/etc/systemd/system/${unit}"
+done
 for unit in wangka-timekeeper.service wangka-timekeeper-save.service wangka-timekeeper.timer; do
     install -m 0644 "${TIME_DIR}/${unit}" "${ROOTFS}/etc/systemd/system/${unit}"
 done
@@ -110,10 +119,22 @@ if [ ! -f "${ROOTFS}/var/lib/wangka-management/state.json" ]; then
     chmod 0600 "${ROOTFS}/var/lib/wangka-management/state.json"
 fi
 
+# The builder runs inside Docker; never ship its private resolver address in
+# the device image. device-uplink starts with domestic fallback resolvers and
+# later prefers DNS supplied by an active LTE profile. host-uplink replaces
+# these with the Mac's current resolvers and restores them on rollback.
+install -m 0644 "${NETWORK_DIR}/resolv.conf.device-uplink" \
+    "${ROOTFS}/var/lib/wangka-network/resolv.conf"
+ln -sfn /var/lib/wangka-network/resolv.conf "${ROOTFS}/etc/resolv.conf"
+
 install -m 0600 "${BUILDER_ROOT}/configs/hotspot.nmconnection" \
     "${ROOTFS}/etc/NetworkManager/system-connections/hotspot.nmconnection"
 sed -i "s/__WANGKA_WIFI_PSK__/${WANGKA_WIFI_PSK}/" \
     "${ROOTFS}/etc/NetworkManager/system-connections/hotspot.nmconnection"
+USB_PROFILE="${ROOTFS}/etc/NetworkManager/system-connections/usb.nmconnection"
+if ! grep -q '^never-default=true$' "${USB_PROFILE}"; then
+    sed -i '/^method=shared$/a never-default=true' "${USB_PROFILE}"
+fi
 ln -sfn "/usr/share/zoneinfo/${WANGKA_TIMEZONE}" "${ROOTFS}/etc/localtime"
 printf '%s\n' "${WANGKA_TIMEZONE}" > "${ROOTFS}/etc/timezone"
 install -m 0755 "${BUILDER_ROOT}/scripts/msm-firmware-loader.sh" \
@@ -148,6 +169,8 @@ ln -sf ../wangka-timekeeper.service \
     "${ROOTFS}/etc/systemd/system/sysinit.target.wants/wangka-timekeeper.service"
 ln -sf ../wangka-timekeeper.timer \
     "${ROOTFS}/etc/systemd/system/timers.target.wants/wangka-timekeeper.timer"
+ln -sf ../wangka-uplink-reconcile.timer \
+    "${ROOTFS}/etc/systemd/system/timers.target.wants/wangka-uplink-reconcile.timer"
 rm -f "${ROOTFS}/etc/systemd/system/sockets.target.wants/wangka-web-proxy.socket"
 
 printf 'FEATURE_INSTALL=PASS\n'
@@ -155,3 +178,4 @@ printf 'FACTORY_SSH_PASSWORD=SET_AND_REDACTED\n'
 printf 'VOHIVE_SHA256=%s\n' "${VOHIVE_SHA256}"
 printf 'USB_MANAGEMENT=http://192.168.5.1/\n'
 printf 'WIFI_MANAGEMENT=http://192.168.4.1/\n'
+printf 'MACOS_HOST_UPLINK=INSTALLED_UNPAIRED\n'

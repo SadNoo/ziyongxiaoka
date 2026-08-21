@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep the Wangka macOS host-uplink lease healthy
+
+[Timer]
+OnBootSec=20s
+OnUnitActiveSec=30s
+AccuracySec=5s
+Unit=wangka-uplink-reconcile.service
+
+[Install]
+WantedBy=timers.target

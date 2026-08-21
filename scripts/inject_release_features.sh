@@ -21,6 +21,7 @@ docker run --rm --privileged --platform linux/amd64 \
     -e WANGKA_WIFI_PSK \
     -e WANGKA_VOHIVE_USERNAME \
     -e WANGKA_VOHIVE_PASSWORD \
+    -e WANGKA_TIMEZONE \
     wangka-openstick-builder:ubuntu22 \
     sh -ec '
         image=/project/tools/OpenStick-Builder/rootfs.raw

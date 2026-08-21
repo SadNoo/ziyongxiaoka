@@ -25,6 +25,7 @@ STATE_FILE = STATE_DIR / "state.json"
 LAST_EPOCH_FILE = STATE_DIR / "last-trusted-epoch"
 SSH_USER = "user"
 HOTSPOT_CONNECTION = "hotspot"
+UPLINK_COMMAND = os.environ.get("WANGKA_UPLINK_COMMAND", "/usr/local/sbin/wangka-uplink")
 MAX_REQUEST_BODY = 32 * 1024
 HOP_HEADERS = {
     "connection",
@@ -93,7 +94,7 @@ SYSTEM_DEVICE_HTML = r"""<!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>系统设备 · VoHive</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f6fa;--card:#fff;--text:#17181c;--muted:#687083;--line:#e5e7ef;--brand:#5b5bd6;--ok:#159a67;--warn:#b7791f}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}header{height:58px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:2}header strong{font-size:18px}a{color:var(--brand);text-decoration:none}.wrap{max-width:1080px;margin:24px auto;padding:0 16px 48px}.banner,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(25,28,45,.05)}.banner{padding:18px 20px;margin-bottom:16px;border-left:5px solid var(--warn)}.banner.done{border-left-color:var(--ok)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{padding:20px;margin-bottom:16px}.grid .card{margin:0}.label{font-size:12px;color:var(--muted);margin-bottom:7px}.value{font-weight:700}.section-title{font-size:18px;margin:0 0 5px}.section-desc{color:var(--muted);font-size:13px;margin:0 0 18px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin-bottom:14px}label{display:block;font-size:13px;font-weight:650;margin-bottom:7px}input{width:100%;height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font-size:15px}.targets{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 16px}.targets label{font-weight:500}.targets input{width:auto;height:auto;margin-right:5px}.actions{display:flex;gap:10px;flex-wrap:wrap}.button{border:0;border-radius:10px;padding:11px 17px;font-weight:700;cursor:pointer;background:#ececfb;color:#3e3ea8}.button.primary{background:var(--brand);color:#fff}.button:disabled{opacity:.5;cursor:not-allowed}.button.small{padding:6px 9px;margin-top:10px;font-size:12px}.notice{padding:12px 14px;border-radius:10px;background:#f0f1ff;color:#3e3ea8;font-size:13px;margin:12px 0;white-space:pre-wrap}.error{background:#fff0f0;color:#b42318}.network{display:flex;gap:12px}.mode{flex:1;border:1px solid var(--line);border-radius:12px;padding:15px}.mode.active{border-color:var(--ok)}.pill{display:inline-block;font-size:11px;padding:3px 8px;border-radius:99px;background:#eaf8f2;color:#087a50}.pill.wait{background:#fff5df;color:#9a6700}@media(max-width:820px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}.network{flex-direction:column}}@media(max-width:520px){.grid{grid-template-columns:1fr}header{padding:0 14px}}
+:root{color-scheme:light dark;--bg:#f5f6fa;--card:#fff;--text:#17181c;--muted:#687083;--line:#e5e7ef;--brand:#5b5bd6;--ok:#159a67;--warn:#b7791f}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}header{height:58px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:2}header strong{font-size:18px}a{color:var(--brand);text-decoration:none}.wrap{max-width:1080px;margin:24px auto;padding:0 16px 48px}.banner,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(25,28,45,.05)}.banner{padding:18px 20px;margin-bottom:16px;border-left:5px solid var(--warn)}.banner.done{border-left-color:var(--ok)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{padding:20px;margin-bottom:16px}.grid .card{margin:0}.label{font-size:12px;color:var(--muted);margin-bottom:7px}.value{font-weight:700}.section-title{font-size:18px;margin:0 0 5px}.section-desc{color:var(--muted);font-size:13px;margin:0 0 18px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin-bottom:14px}label{display:block;font-size:13px;font-weight:650;margin-bottom:7px}input{width:100%;height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font-size:15px}.targets{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 16px}.targets label{font-weight:500}.targets input{width:auto;height:auto;margin-right:5px}.actions{display:flex;gap:10px;flex-wrap:wrap}.button{border:0;border-radius:10px;padding:11px 17px;font-weight:700;cursor:pointer;background:#ececfb;color:#3e3ea8}.button.primary{background:var(--brand);color:#fff}.button:disabled{opacity:.5;cursor:not-allowed}.button.small{padding:6px 9px;margin-top:10px;font-size:12px}.notice{padding:12px 14px;border-radius:10px;background:#f0f1ff;color:#3e3ea8;font-size:13px;margin:12px 0;white-space:pre-wrap}.error{background:#fff0f0;color:#b42318}.network{display:flex;gap:12px}.mode{flex:1;border:1px solid var(--line);border-radius:12px;padding:15px}.mode.active{border:2px solid var(--ok)}.pill{display:inline-block;font-size:11px;padding:3px 8px;border-radius:99px;background:#eaf8f2;color:#087a50}.pill.wait{background:#fff5df;color:#9a6700}.helper-state{margin-top:14px}@media(max-width:820px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}.network{flex-direction:column}}@media(max-width:520px){.grid{grid-template-columns:1fr}header{padding:0 14px}}
 @media(prefers-color-scheme:dark){:root{--bg:#101014;--card:#18181f;--text:#f2f2f6;--muted:#999aab;--line:#30303b}.notice{background:#262640}.error{background:#401f22}}
 </style>
 </head>
@@ -132,11 +133,12 @@ SYSTEM_DEVICE_HTML = r"""<!doctype html>
   </section>
   <section class="card">
     <h2 class="section-title">USB 网络方向</h2>
-    <p class="section-desc">开关位置已纳入系统设备页；host-uplink 后端将在批次 2 安装后启用。</p>
+    <p class="section-desc">显式选择网络方向；切换不会改变 USB 管理地址，失败时会自动恢复 device-uplink。</p>
     <div class="network">
-      <div class="mode active"><span class="pill">当前</span><h3>device-uplink</h3><p class="section-desc">设备通过 SIM/LTE 向 USB/Wi-Fi 客户端共享网络。</p></div>
-      <div class="mode"><span class="pill wait">待安装</span><h3>host-uplink</h3><p class="section-desc">Debian 通过 USB 借用 Mac/PC 网络。</p><button class="button" disabled>批次 2 后启用</button></div>
+      <div id="deviceMode" class="mode"><span id="devicePill" class="pill wait">可选择</span><h3>device-uplink</h3><p class="section-desc">设备通过 SIM/LTE 向 USB/Wi-Fi 客户端共享网络。</p><button id="selectDevice" class="button">切换到设备上行</button></div>
+      <div id="hostMode" class="mode"><span id="hostPill" class="pill wait">正在检查</span><h3>host-uplink</h3><p class="section-desc">仅 Debian 本机通过 USB 借用当前 Mac 网络；不会转发 Wi-Fi 客户端。</p><button id="selectHost" class="button primary" disabled>切换到 Mac 上行</button></div>
     </div>
+    <div id="uplinkValue" class="notice helper-state">正在检查 Mac 助手…</div>
   </section>
   <section class="card">
     <h2 class="section-title">VoHive 维护保护</h2>
@@ -157,6 +159,30 @@ async function api(path, options={}) {
   return data;
 }
 function show(message, error=false) { const box=$('message'); box.hidden=false; box.textContent=message; box.className='notice'+(error?' error':''); }
+function renderUplink(status) {
+  const mode=status.uplink_mode || 'device-uplink';
+  const uplink=status.uplink || {};
+  $('deviceMode').classList.toggle('active',mode==='device-uplink');
+  $('hostMode').classList.toggle('active',mode==='host-uplink');
+  $('devicePill').textContent=mode==='device-uplink'?'当前':'可选择';
+  $('hostPill').textContent=mode==='host-uplink'?'当前':(uplink.installed?'可选择':'未配对');
+  $('selectDevice').disabled=mode==='device-uplink';
+  $('selectHost').disabled=!uplink.installed || !uplink.helper_reachable || mode==='host-uplink';
+  let text=`当前模式：${mode}\nMac 助手：${uplink.helper_reachable?'已连接':(uplink.installed?'未连接':'未安装或未配对')}`;
+  if(uplink.helper && uplink.helper.upstream_interface) text+=`\nMac 当前上游：${uplink.helper.upstream_interface}`;
+  if(uplink.last_result && uplink.last_result!=='never') text+=`\n最近结果：${uplink.last_result}`;
+  if(uplink.last_error) text+=`\n提示：${uplink.last_error}`;
+  $('uplinkValue').textContent=text;
+  $('uplinkValue').className='notice helper-state'+(uplink.last_error?' error':'');
+}
+async function switchUplink(mode) {
+  const label=mode==='host-uplink'?'Mac 上行':'设备上行';
+  if(!confirm(`确认切换到 ${label}？管理地址 192.168.5.1 将保持不变。`)) return;
+  $('selectDevice').disabled=true;$('selectHost').disabled=true;
+  $('uplinkValue').textContent='正在切换并检查回滚条件…';
+  try { await api('/wangka/api/uplink',{method:'POST',body:JSON.stringify({mode})}); const status=await api('/wangka/api/status'); renderUplink(status); }
+  catch(e) { show(e.message,true); try { renderUplink(await api('/wangka/api/status')); } catch(_) {} }
+}
 async function syncClock() {
   const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   const result=await api('/wangka/api/time',{method:'POST',body:JSON.stringify({client_epoch:Math.floor(Date.now()/1000),timezone})});
@@ -171,6 +197,7 @@ async function load() {
     $('wifiSsid').value=status.wifi_ssid || 'Wangka-UFI103S';
     $('timeValue').textContent=`${status.system_time}\n${status.timezone}`;
     $('serviceValue').textContent=`VoHive：${status.vohive_active?'运行中':'未运行'}\n卸载接口：已阻止\n管理代理：运行中`;
+    renderUplink(status);
     const banner=$('banner');
     if(status.initialized){ banner.className='banner done'; banner.innerHTML='<strong>初始化已完成</strong><div class="section-desc">仍可在此分别修改三项密码。</div>'; }
     else { banner.innerHTML='<strong>必须完成首次初始化</strong><div class="section-desc">请修改三项默认密码，或生成一个新密码统一应用。</div>'; ['targetSsh','targetWifi','targetVohive'].forEach(id=>{$(id).checked=true;$(id).disabled=true;}); $('currentPassword').value='123456789'; }
@@ -194,6 +221,8 @@ $('apply').onclick=async()=>{
     show(text);
   }catch(e){show(e.message,true)}finally{$('apply').disabled=false}
 };
+$('selectDevice').onclick=()=>switchUplink('device-uplink');
+$('selectHost').onclick=()=>switchUplink('host-uplink');
 load();
 </script>
 </body></html>"""
@@ -328,6 +357,47 @@ def run_command(args: list[str], *, input_text: Optional[str] = None) -> str:
     if result.returncode != 0:
         raise RuntimeError(f"系统操作失败：{args[0]}")
     return result.stdout.strip()
+
+
+def uplink_status() -> dict[str, Any]:
+    try:
+        raw = run_command([UPLINK_COMMAND, "status"])
+        payload = json.loads(raw)
+        if not isinstance(payload, dict) or payload.get("status") != "ok":
+            raise ValueError("invalid uplink status")
+        return payload
+    except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
+        state = load_state()
+        return {
+            "status": "error",
+            "mode": state.get("uplink_mode", "device-uplink"),
+            "installed": False,
+            "helper_reachable": False,
+            "helper_enabled": False,
+            "last_result": state.get("uplink_last_result", "unavailable"),
+            "last_error": "USB 网络方向助手暂不可用",
+        }
+
+
+def switch_uplink(mode: str) -> dict[str, Any]:
+    if mode not in {"device-uplink", "host-uplink"}:
+        raise ValueError("网络方向无效")
+    result = subprocess.run(
+        [UPLINK_COMMAND, mode],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        timeout=30,
+        check=False,
+    )
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError as exc:
+        raise RuntimeError("网络方向助手返回无效结果") from exc
+    if result.returncode != 0 or not isinstance(payload, dict) or payload.get("status") != "ok":
+        message = payload.get("message", "网络方向切换失败") if isinstance(payload, dict) else "网络方向切换失败"
+        raise RuntimeError(str(message)[:240])
+    return payload
 
 
 def shadow_hash(username: str) -> str:
@@ -522,6 +592,7 @@ class WangkaHandler(BaseHTTPRequestHandler):
             return
         if path == "/wangka/api/status" and self.command == "GET":
             state = load_state()
+            uplink = uplink_status()
             try:
                 ssid = nm_value("802-11-wireless.ssid")
             except (OSError, RuntimeError, subprocess.TimeoutExpired):
@@ -538,8 +609,9 @@ class WangkaHandler(BaseHTTPRequestHandler):
                     "ssh_username": SSH_USER,
                     "vohive_username": "user",
                     "wifi_ssid": ssid,
-                    "uplink_mode": "device-uplink",
-                    "host_uplink_installed": False,
+                    "uplink_mode": uplink.get("mode", state.get("uplink_mode", "device-uplink")),
+                    "host_uplink_installed": bool(uplink.get("installed")),
+                    "uplink": uplink,
                     "vohive_active": active,
                     "uninstall_blocked": True,
                     **system_time_payload(),
@@ -566,6 +638,17 @@ class WangkaHandler(BaseHTTPRequestHandler):
             return
         if path == "/wangka/api/generate" and self.command == "POST":
             self.send_json(200, {"password": secrets.token_urlsafe(18)})
+            return
+        if path == "/wangka/api/uplink" and self.command == "POST":
+            try:
+                payload = self.read_json()
+                mode = str(payload.get("mode", ""))
+                result = switch_uplink(mode)
+                self.send_json(200, result)
+            except ValueError as exc:
+                self.send_json(400, {"status": "error", "message": str(exc)})
+            except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                self.send_json(500, {"status": "error", "message": str(exc)[:240]})
             return
         if path == "/wangka/api/credentials" and self.command == "POST":
             self.handle_credentials()

@@ -17,6 +17,7 @@ tools/
 # Local logs and credentials for optional SMS forwarding destinations.
 logs/
 .env
+private/
 *.secret
 *.pem
 *.key

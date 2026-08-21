@@ -1,0 +1,11 @@
+table inet wangka_host_uplink {
+    chain forward_guard {
+        type filter hook forward priority -20; policy accept;
+
+        # host-uplink is deliberately for the Debian device itself. Wi-Fi
+        # clients must not be NATed through the Mac by NetworkManager's shared
+        # hotspot and USB profiles.
+        iifname "wlan0" oifname "usb0" drop
+        ip saddr 192.168.4.0/24 oifname "usb0" drop
+    }
+}

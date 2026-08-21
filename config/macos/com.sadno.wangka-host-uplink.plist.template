@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.sadno.wangka-host-uplink</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/libexec/wangka-host-uplinkd</string>
+    <string>-listen</string>
+    <string>192.168.5.242:19531</string>
+    <string>-usb-interface</string>
+    <string>__WANGKA_USB_INTERFACE__</string>
+    <string>-secret</string>
+    <string>/Library/Application Support/Wangka/host-uplink.token</string>
+    <string>-state</string>
+    <string>/var/db/wangka-host-uplink/state.json</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/var/log/wangka-host-uplink.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/wangka-host-uplink.log</string>
+</dict>
+</plist>
