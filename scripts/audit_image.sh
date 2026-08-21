@@ -63,6 +63,7 @@ require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/NetworkMa
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-network-ready.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/sysinit.target.wants/wangka-timekeeper.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-timekeeper.timer"
+require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-uplink-reconcile.timer"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/vohive.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-vohive-enroll.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-web-firewall.service"
@@ -73,7 +74,11 @@ require_masked "${ROOT_MOUNT}/etc/systemd/system/dnsmasq.service"
 require_masked "${ROOT_MOUNT}/etc/systemd/system/NetworkManager-wait-online.service"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-modem"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready"
+require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-network-ready.service"
+require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-uplink-reconcile.service"
+require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-uplink-reconcile.timer"
+require_file "${ROOT_MOUNT}/etc/nftables.d/wangka-host-uplink.nft"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-timekeeper"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-timekeeper.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-timekeeper-save.service"
@@ -94,6 +99,29 @@ grep -q 'connection up usb' "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready" 
     || fail "USB management network recovery missing"
 grep -q 'connection up hotspot' "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready" \
     || fail "Wi-Fi management network recovery missing"
+grep -q 'host-uplink failed and was rolled back' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "host-uplink rollback state machine missing"
+grep -q '^MAX_CONSECUTIVE_RENEW_FAILURES = 2$' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "host-uplink consecutive failure guard missing"
+grep -q 'for attempt in range(2):' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "host helper transient retry missing"
+grep -q '^FALLBACK_DEVICE_DNS = \["114.114.114.114", "223.5.5.5"\]$' \
+    "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "device-uplink runtime DNS fallback mismatch"
+grep -q 'iifname "wlan0" oifname "usb0" drop' \
+    "${ROOT_MOUNT}/etc/nftables.d/wangka-host-uplink.nft" \
+    || fail "host-uplink Wi-Fi isolation missing"
+DEVICE_RESOLVER="${ROOT_MOUNT}/var/lib/wangka-network/resolv.conf"
+require_file "${DEVICE_RESOLVER}"
+grep -q '^# Managed by wangka-uplink (device-uplink).$' "${DEVICE_RESOLVER}" \
+    || fail "device resolver is not in factory mode"
+grep -q '^nameserver 114.114.114.114$' "${DEVICE_RESOLVER}" \
+    || fail "114DNS fallback missing"
+grep -q '^nameserver 223.5.5.5$' "${DEVICE_RESOLVER}" \
+    || fail "AliDNS fallback missing"
+[ -L "${ROOT_MOUNT}/etc/resolv.conf" ] \
+    && [ "$(readlink "${ROOT_MOUNT}/etc/resolv.conf")" = /var/lib/wangka-network/resolv.conf ] \
+    || fail "device resolver is not linked to atomic management state"
 grep -q 'sms-send NUMBER TEXT' "${ROOT_MOUNT}/usr/local/sbin/wangka-modem" || fail "SMS management command missing"
 require_link "${ROOT_MOUNT}/usr/local/bin/wangka-modem"
 
@@ -102,6 +130,8 @@ require_file "${USB_PROFILE}"
 grep -q '^interface-name=usb0$' "${USB_PROFILE}" || fail "USB network profile is not bound to usb0"
 grep -q '^address1=192.168.5.1/24$' "${USB_PROFILE}" || fail "USB network address mismatch"
 grep -q '^method=shared$' "${USB_PROFILE}" || fail "USB network sharing is disabled"
+grep -q '^never-default=true$' "${USB_PROFILE}" \
+    || fail "USB management profile may install an unwanted default route"
 
 HOTSPOT="${ROOT_MOUNT}/etc/NetworkManager/system-connections/hotspot.nmconnection"
 require_file "${HOTSPOT}"
@@ -156,6 +186,8 @@ grep -q 'SYSTEM_DEVICE_HTML' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-pro
     || fail "system device page missing"
 grep -q 'path == "/wangka/api/time"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
     || fail "browser time synchronization endpoint missing"
+grep -q 'path == "/wangka/api/uplink"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
+    || fail "protected uplink switch endpoint missing"
 [ ! -e "${ROOT_MOUNT}/etc/NetworkManager/dispatcher.d/90-wangka-management-alias" ] \
     || fail "obsolete Wi-Fi management alias remains"
 require_file "${ROOT_MOUNT}/etc/nftables.d/wangka-web.nft"
@@ -178,6 +210,9 @@ grep -q '^ListenStream=192.168.5.1:7575$' \
 grep -q '^ExecStart=/usr/local/sbin/wangka-management-proxy --socket-activation$' \
     "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.service" \
     || fail "protected management proxy service mismatch"
+grep -q '^Wants=wangka-uplink-reconcile.service$' \
+    "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.socket" \
+    || fail "management page does not reconcile host-uplink before startup"
 grep -q 'tcp dport 17575 drop' "${ROOT_MOUNT}/etc/nftables.d/wangka-web.nft" \
     || fail "raw VoHive backend is not blocked"
 
@@ -207,6 +242,7 @@ printf 'DTB=msm8916-thwc-ufi001c.dtb\n'
 printf 'USB_GADGET=CDC_ECM\n'
 printf 'MANAGEMENT_NETWORK_RETRY=YES\n'
 printf 'PERSISTENT_TIMEKEEPER=YES\n'
+printf 'MACOS_HOST_UPLINK=INSTALLED_UNPAIRED\n'
 printf 'FACTORY_TIMEZONE=Asia/Shanghai\n'
 printf 'USB_ADDRESS=192.168.5.1/24\n'
 printf 'HOTSPOT_SSID=Wangka-UFI103S\n'

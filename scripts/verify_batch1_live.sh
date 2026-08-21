@@ -26,8 +26,8 @@ pass 'USB root and protected shell injection'
 code=$(http_code "$TMP_DIR/system.html" "${BASE_URL}/wangka/system-device")
 [ "$code" = 200 ] || fail "system-device HTTP ${code}"
 grep -q '系统设备' "$TMP_DIR/system.html" || fail 'system-device content missing'
-grep -q '待安装' "$TMP_DIR/system.html" || fail 'batch-2 uplink placeholder missing'
-pass 'system-device page and batch-2 placeholder'
+grep -q '切换到 Mac 上行' "$TMP_DIR/system.html" || fail 'uplink controls missing'
+pass 'system-device page and uplink controls'
 
 for endpoint in "${BASE_URL}" "${ALT_URL}"; do
     code=$(curl -sS --connect-timeout 5 --max-time 15 \

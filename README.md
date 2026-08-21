@@ -60,12 +60,14 @@
 - VoHive 网页管理，可从 USB 或 Wi-Fi 查看 modem、SIM 和短信功能。
 - ModemManager、QMI/AT 与 `qmi-proxy` 共存，并自动登记板载 modem。
 - “系统设备”页面可以修改 SSH、Wi-Fi 和 VoHive 密码，也可以生成一个新密码统一应用。
+- macOS USB 反向共享：可在“系统设备”页显式切换 `device-uplink`/`host-uplink`，无 SIM 时 Debian 可借用 Mac 当前网络；失败会自动回滚。
+- `device-uplink` 优先使用有效网络连接提供的 DNS；没有可用 DNS 时，刷机镜像内置 `114.114.114.114` 和 `223.5.5.5` 作为国内备用 DNS。
 - 网页自动校准系统时间，默认时区为 `Asia/Shanghai`；断电后会恢复最近保存的可信时间。
 - VoHive 网页卸载入口已禁用，直接调用卸载接口也会被拒绝；修复和重新登记只能通过 SSH 的固定维护命令执行。
 - 新设备刷写脚本包含双全盘备份、机型/容量/GPT 门禁、设备独有分区保护和刷后回读。
 - 保留使用该物理设备自身备份恢复原厂系统的路径。
 
-目前设备没有插 SIM，因此真实运营商注册、LTE 数据和短信收发仍需在实际 SIM 与 APN 环境中测试。USB 反向共享也还没有完成：现在设备不会自动借用 Mac/PC 的现有网络上网。
+目前设备没有插 SIM，因此真实运营商注册、LTE 数据和短信收发仍需在实际 SIM 与 APN 环境中测试。macOS USB 反向共享已经在当前样机通过；Windows/Linux 主机助手仍属于后续工作。
 
 ## 设备如何使用
 
@@ -94,6 +96,16 @@ sudo -i
 ```
 
 第一次登录 VoHive 后，页面会要求更新 SSH、Wi-Fi 和 VoHive 三项密码。可以手工输入一个共用密码，也可以让设备生成后复制保存。修改 Wi-Fi 密码前先记下新密码，热点重启后需要重新连接。
+
+在 Mac 上第一次使用 USB 反向共享，需要先安装并配对本机助手。开发阶段在项目目录创建已被 Git 忽略的 `private/device-credentials.env`，填写设备当前 `user` 密码，然后运行：
+
+```sh
+./scripts/deploy_batch2.sh
+```
+
+macOS 会显示自己的管理员授权框；管理员密码不会写进项目。安装完成后打开 VoHive 的“系统设备”，选择 `host-uplink`，Debian 本机即可通过 USB 借用 Mac 当前 Wi-Fi、有线或 VPN 网络；选择 `device-uplink` 会清理临时路由、DNS 和本项目自己的 PF 规则。两种模式都保留 `192.168.5.1` 的 SSH、80 和 7575。`host-uplink` 只供 Debian 本机使用，不会把设备 Wi-Fi 客户端转发进 Mac 网络。
+
+刷机镜像的设备侧备用 DNS 固定为 `114.114.114.114` 和 `223.5.5.5`，用于 `device-uplink` 没有获得有效 DNS 的情况；`host-uplink` 正常情况下仍跟随 Mac 当前 DNS。
 
 如果网页日志时间不对，确认手机或电脑本身的时间正确，然后进入“系统设备”，点击“用本机时间校准”。插拔 SIM 前应先执行 `sudo systemctl poweroff`，等待设备完全关机后再断电操作，不要带电移动 SIM。
 

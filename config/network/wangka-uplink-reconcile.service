@@ -1,0 +1,16 @@
+[Unit]
+Description=Renew or safely roll back Wangka host-uplink
+After=wangka-network-ready.service
+Requires=wangka-network-ready.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wangka-uplink reconcile
+SuccessExitStatus=1
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=full
+# /etc/resolv.conf links into this private state directory so DNS updates stay
+# atomic without making /etc writable inside the service sandbox.
+ReadWritePaths=/var/lib/wangka-management /var/lib/wangka-network /run
+RestrictAddressFamilies=AF_UNIX AF_INET AF_NETLINK

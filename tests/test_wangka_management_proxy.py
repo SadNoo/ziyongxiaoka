@@ -11,6 +11,7 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = (
@@ -85,8 +86,20 @@ class ManagementProxyTests(unittest.TestCase):
         self.assertIn("VoHive · 系统设备", body)
         self.assertIn("device-uplink", body)
         self.assertIn("host-uplink", body)
-        self.assertIn("批次 2 后启用", body)
+        self.assertIn("切换到 Mac 上行", body)
+        self.assertIn("不会转发 Wi-Fi 客户端", body)
         self.assertIn("用本机时间校准", body)
+
+    def test_uplink_switch_only_accepts_fixed_modes(self) -> None:
+        with self.assertRaises(ValueError):
+            self.module.switch_uplink("host-uplink; reboot")
+        completed = self.module.subprocess.CompletedProcess(
+            ["wangka-uplink", "host-uplink"], 0, '{"status":"ok","mode":"host-uplink"}', ""
+        )
+        with mock.patch.object(self.module.subprocess, "run", return_value=completed) as invoked:
+            result = self.module.switch_uplink("host-uplink")
+        self.assertEqual(result["mode"], "host-uplink")
+        self.assertEqual(invoked.call_args.args[0][-1], "host-uplink")
 
     def test_uninstall_is_rejected_without_reaching_backend(self) -> None:
         request = urllib.request.Request(
