@@ -19,6 +19,74 @@ The fixed binary depends on an upstream private module and cannot currently
 be reproduced entirely from public source. Its use remains limited to the
 purposes permitted by its upstream license.
 
+The release image uses a locally patched VoHive build from
+`hzlmy2002/vohive-collection` commit
+`0c3052c524865a92d546f8fea12d873214c5f8e3`. The public patch and reproducible
+build recipe are `patches/vohive-collection-wangka-work-modes.patch` and
+`scripts/build_patched_vohive.sh`; the patched ARM64 binary SHA-256 is
+`1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a`.
+The same PolyForm Noncommercial terms and Required Notice apply.
+
+## EDL client
+
+- Release path: `tools/edl`
+- Upstream: <https://github.com/bkerler/edl>
+- Fixed revision: `2f8e89a848afaaef68997fcbcb5b178d958d497b`
+- License: GNU General Public License version 3, with the additional upstream
+  noncommercial-product notice stated in its README.
+- License file: `tools/edl/LICENSE` and `LICENSES/GPL-3.0-only-edl.txt`
+
+The complete Python source and `uv.lock` are shipped in the flashing asset;
+the EDL client is not bundled into WiSiM. For privacy hygiene, the release copy
+replaces one numeric example IMEI in an unrelated OnePlus help-text block with
+the literal placeholder `<redacted-example>`. It does not change EDL protocol
+or flashing behavior, and the complete modified source is included.
+
+## Qualcomm Firehose loader
+
+- Release path: `tools/edl/Loaders/qualcomm/factory/msm8916/007050e100000000_394a2e47cf830150_fhprg_peek.bin`
+- SHA-256: `53f193500c03248f0d671ab57bfe9ca8a42967e97f28403294b4b3f854075aca`
+- Source repository: <https://github.com/bkerler/Loaders>
+- Fixed revision: `bf0d8017eb97464530114a348c5157a6ea6a3372`
+- Upstream statement: `tools/edl/Loaders/README.md`
+
+The loader repository does not provide a conventional software license. Its
+README states that the loaders are provided for unbricking and repair of
+devices no longer under warranty, must not be sold, and may be removed at a
+copyright holder's request. The project does not relicense or claim ownership
+of this binary. It is shipped only as a fixed, noncommercial repair component
+for the explicitly gated MSM8916 device.
+
+## OpenStick boot components
+
+- Builder: <https://github.com/kinsamanka/OpenStick-Builder>, fixed revision
+  `57244976de2dccec5d1c9eb527d3cc2793d580c2`
+- `aboot.mbn`: SHA-256
+  `223283b927ab8076e9a2f3dc86248b024ff5ddb3f510bb1595dc984f03a05ed2`,
+  generated from lk2nd revision `99297666a4b0a5b0ceb67d42b2a2ee6e0c3963ff`
+- `hyp.mbn`: SHA-256
+  `c6414843b635a2b3e7ec58bc5a6c6c7c7aef7f5a31898dc5923c2085c9de1a2d`,
+  generated from qhypstub revision `fca3c513b6fb5e5b8fabae21dac1f4a5c0b51bc6`
+
+The builder is MIT licensed. lk2nd retains its MIT/BSD and component-specific
+notices; qhypstub is GPL-2.0. License texts are included as
+`LICENSES/OpenStick-Builder-MIT.txt`, `LICENSES/lk2nd-LICENSE.txt`,
+`LICENSES/lk2nd-upstream-LICENSE.txt`, and
+`LICENSES/GPL-2.0-only-qhypstub.txt`. Exact source revisions remain available
+at the linked public repositories.
+
+## DragonBoard 410c Qualcomm firmware
+
+- Release path: `downloads/dragonboard410c-17.09/tz.mbn`
+- SHA-256: `8d2a0cf01e3b0c7ca257333df1adc96d85a4ccda773c8258b8d7395257008171`
+- Source package: `dragonboard410c_bootloader_emmc_android-88.zip`
+- License file: `LICENSES/Qualcomm-DragonBoard410c-license.txt`
+
+The source package identifies `tz.mbn` as Redistributable Binary Code. Its
+license permits binary redistribution only as part of an application, only on
+Qualcomm chipset platforms, and requires distribution of the license text.
+The flashing package preserves those restrictions and includes the exact text.
+
 ## Gadget Tool (`gt`)
 
 - Distributed path: `vendor/gadget-tools/gt`

@@ -1,14 +1,16 @@
 [Unit]
 Description=VoHive local Web SMS manager
 Documentation=https://github.com/jikdarren/vohive
-After=network-online.target ModemManager.service
+After=network-online.target
 Wants=network-online.target
+Conflicts=ModemManager.service
 
 [Service]
 Type=simple
 User=root
 Group=root
 WorkingDirectory=/var/lib/vohive
+ExecStartPre=/usr/local/sbin/wangka-vohive-qmi-owner
 ExecStart=/usr/local/sbin/vohive -c /etc/vohive/config.yaml
 Restart=on-failure
 RestartSec=5s

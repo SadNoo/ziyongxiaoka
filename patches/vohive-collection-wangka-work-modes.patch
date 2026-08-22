@@ -1,0 +1,310 @@
+diff --git a/vohive/go.mod b/vohive/go.mod
+index 0ed232d..48c0413 100644
+--- a/vohive/go.mod
++++ b/vohive/go.mod
+@@ -113,3 +113,5 @@ require (
+ )
+ 
+ replace github.com/iniwex5/vowifi-go => ../vowifi-go
++
++replace github.com/iniwex5/swu-go => ../swu-go
+diff --git a/vohive/internal/api/server.go b/vohive/internal/api/server.go
+index ccb4ea6..166d3ce 100644
+--- a/vohive/internal/api/server.go
++++ b/vohive/internal/api/server.go
+@@ -27,6 +27,7 @@ import (
+ 	"github.com/iniwex5/vohive/internal/proxy/server"
+ 	proxytraffic "github.com/iniwex5/vohive/internal/proxy/traffic"
+ 	vwebsheet "github.com/iniwex5/vohive/internal/websheet"
++	"github.com/iniwex5/vohive/internal/workmode"
+ 	"github.com/iniwex5/vohive/pkg/smscodec"
+ 	"github.com/iniwex5/vowifi-go/runtimehost/messaging"
+ 	"github.com/iniwex5/vowifi-go/runtimehost/voicehost"
+@@ -1072,6 +1073,10 @@ func (s *Server) handleStats(c *gin.Context) {
+ }
+ 
+ func (s *Server) handleSendSMS(c *gin.Context) {
++	if !workmode.SMSEnabled() {
++		c.JSON(http.StatusConflict, gin.H{"status": "error", "message": "当前为网卡模式，短信引擎已停用"})
++		return
++	}
+ 	type SendSMSRequest struct {
+ 		DeviceID string `json:"device_id"`
+ 		IMSI     string `json:"imsi"`
+diff --git a/vohive/internal/device/pool.go b/vohive/internal/device/pool.go
+index 37a0966..05dd422 100644
+--- a/vohive/internal/device/pool.go
++++ b/vohive/internal/device/pool.go
+@@ -23,6 +23,7 @@ import (
+ 	qmicore "github.com/iniwex5/vohive/internal/qmi"
+ 	"github.com/iniwex5/vohive/internal/sipgw"
+ 	"github.com/iniwex5/vohive/internal/vowifihost"
++	"github.com/iniwex5/vohive/internal/workmode"
+ 	"github.com/iniwex5/vohive/pkg/logger"
+ 	"github.com/iniwex5/vohive/pkg/smscodec"
+ 	"github.com/iniwex5/vowifi-go/runtimehost"
+@@ -1628,12 +1629,18 @@ func (p *Pool) startAllSynchronousLegacy() error {
+ 		if bMode == backend.BackendQMI {
+ 			// QMI 模式：WMS EventNewSMS → handleNewSMSQMI → processSMS
+ 			w.smsMode = smsModeQMI
+-			if smsCore := w.smsQMICore(); smsCore != nil {
++			if smsCore := w.smsQMICore(); smsCore != nil && workmode.SMSEnabled() {
+ 				smsCore.OnNewSMSWithStorage(func(storage uint8, index uint32) {
++					if !workmode.SMSEnabled() {
++						return
++					}
+ 					logger.Info(fmt.Sprintf("[%s] 收到 QMI 短信通知", w.ID), "index", index, "storage", storage)
+ 					w.handleNewSMSQMI(storage, index)
+ 				})
+ 				smsCore.OnNewSMSRaw(func(info qmicore.RawSMSIndication) {
++					if !workmode.SMSEnabled() {
++						return
++					}
+ 					logger.Info(fmt.Sprintf("[%s] 收到 QMI 原始短信通知", w.ID),
+ 						"pdu_len", len(info.PDU),
+ 						"ack_required", info.AckRequired,
+@@ -1647,7 +1654,7 @@ func (p *Pool) startAllSynchronousLegacy() error {
+ 		} else if bMode == backend.BackendMBIM {
+ 			// MBIM 模式：SMS_READ indication → handleNewSMSMBIM → processSMS
+ 			w.smsMode = smsModeMBIM
+-			if mbimCore != nil {
++			if mbimCore != nil && workmode.SMSEnabled() {
+ 				mbimCore.OnNewSMS(func() {
+ 					logger.Info(fmt.Sprintf("[%s] 收到 MBIM 短信通知", w.ID))
+ 					w.handleNewSMSMBIM("indication")
+@@ -1657,12 +1664,15 @@ func (p *Pool) startAllSynchronousLegacy() error {
+ 		} else {
+ 			// AT 模式：+CMTI URC → AT+CMGR 读取 → smsCallback → processSMS
+ 			w.smsMode = smsModeAT
+-			m.SetNewSMSHandler(nil)    // 不接管，让 modem.Manager 内部原生处理
+-			m.SetDisableURCRead(false) // 确保 AT URC 自动读取启用
++			m.SetNewSMSHandler(nil) // 不接管，让 modem.Manager 内部原生处理
++			m.SetDisableURCRead(!workmode.SMSEnabled())
+ 			m.SetSIMStatusHandler(func(inserted *bool, state string) {
+ 				p.handleSIMStatusEvent(w.ID, "at_urc", inserted, state)
+ 			})
+ 			m.SetSMSCallback(func(sender, content string, timestamp time.Time) {
++				if !workmode.SMSEnabled() {
++					return
++				}
+ 				w.processSMS(sender, content, timestamp)
+ 			})
+ 		}
+@@ -1763,6 +1773,9 @@ func (p *Pool) startAllSynchronousLegacy() error {
+ 				case <-worker.stop:
+ 					return
+ 				case <-ticker.C:
++					if !workmode.SMSEnabled() {
++						continue
++					}
+ 					switch worker.smsMode {
+ 					case smsModeAT:
+ 						// AT 模式：完全依赖 URC，不轮询
+diff --git a/vohive/internal/device/pool_bootstrap.go b/vohive/internal/device/pool_bootstrap.go
+index 8b15b96..36e146c 100644
+--- a/vohive/internal/device/pool_bootstrap.go
++++ b/vohive/internal/device/pool_bootstrap.go
+@@ -15,6 +15,7 @@ import (
+ 	mbimcore "github.com/iniwex5/vohive/internal/mbim"
+ 	"github.com/iniwex5/vohive/internal/modem"
+ 	qmicore "github.com/iniwex5/vohive/internal/qmi"
++	"github.com/iniwex5/vohive/internal/workmode"
+ 	"github.com/iniwex5/vohive/pkg/logger"
+ 	"github.com/iniwex5/vohive/pkg/smscodec"
+ 
+@@ -545,12 +546,18 @@ func (p *Pool) AddWorkerFromConfig(devCfg config.DeviceConfig) (*Worker, error)
+ 
+ 	if backendMode == backend.BackendQMI {
+ 		w.smsMode = smsModeQMI
+-		if smsCore := w.smsQMICore(); smsCore != nil {
++		if smsCore := w.smsQMICore(); smsCore != nil && workmode.SMSEnabled() {
+ 			smsCore.OnNewSMSWithStorage(func(storage uint8, index uint32) {
++				if !workmode.SMSEnabled() {
++					return
++				}
+ 				logger.Info(fmt.Sprintf("[%s] 收到 QMI 短信 URC 通知", w.ID), "index", index, "storage", storage)
+ 				w.handleNewSMSQMI(storage, index)
+ 			})
+ 			smsCore.OnNewSMSRaw(func(info qmicore.RawSMSIndication) {
++				if !workmode.SMSEnabled() {
++					return
++				}
+ 				logger.Info(fmt.Sprintf("[%s] 收到 QMI 原始短信通知", w.ID),
+ 					"pdu_len", len(info.PDU),
+ 					"ack_required", info.AckRequired,
+@@ -563,7 +570,7 @@ func (p *Pool) AddWorkerFromConfig(devCfg config.DeviceConfig) (*Worker, error)
+ 		// 纯 QMI 模式不监听 AT URC；AT 口仅保留给人工 AT 终端。
+ 	} else if backendMode == backend.BackendMBIM {
+ 		w.smsMode = smsModeMBIM
+-		if mbimCore != nil {
++		if mbimCore != nil && workmode.SMSEnabled() {
+ 			mbimCore.OnNewSMS(func() {
+ 				logger.Info(fmt.Sprintf("[%s] 收到 MBIM 短信通知", w.ID))
+ 				w.handleNewSMSMBIM("indication")
+@@ -573,8 +580,11 @@ func (p *Pool) AddWorkerFromConfig(devCfg config.DeviceConfig) (*Worker, error)
+ 	} else {
+ 		w.smsMode = smsModeAT
+ 		m.SetNewSMSHandler(nil)
+-		m.SetDisableURCRead(false)
++		m.SetDisableURCRead(!workmode.SMSEnabled())
+ 		m.SetSMSCallback(func(sender, content string, timestamp time.Time) {
++			if !workmode.SMSEnabled() {
++				return
++			}
+ 			w.processSMS(sender, content, timestamp)
+ 		})
+ 	}
+@@ -700,6 +710,9 @@ func (p *Pool) AddWorkerFromConfig(devCfg config.DeviceConfig) (*Worker, error)
+ 			case <-worker.stop:
+ 				return
+ 			case <-ticker.C:
++				if !workmode.SMSEnabled() {
++					continue
++				}
+ 				switch worker.smsMode {
+ 				case smsModeAT:
+ 				case smsModeQMI:
+diff --git a/vohive/internal/device/pool_sms.go b/vohive/internal/device/pool_sms.go
+index 0ed4ff1..4e55fb9 100644
+--- a/vohive/internal/device/pool_sms.go
++++ b/vohive/internal/device/pool_sms.go
+@@ -13,6 +13,7 @@ import (
+ 	"github.com/iniwex5/vohive/internal/modem"
+ 	qmicore "github.com/iniwex5/vohive/internal/qmi"
+ 	"github.com/iniwex5/vohive/internal/smsnotify"
++	"github.com/iniwex5/vohive/internal/workmode"
+ 	"github.com/iniwex5/vohive/pkg/logger"
+ 	"github.com/iniwex5/vohive/pkg/smscodec"
+ 
+@@ -349,10 +350,16 @@ func (w *Worker) getPhoneNumberWithContext(ctx context.Context) string {
+ }
+ 
+ func (w *Worker) SendSMS(phone, message string) error {
++	if !workmode.SMSEnabled() {
++		return fmt.Errorf("当前为网卡模式，短信引擎已停用")
++	}
+ 	return w.SendSMSWithOptions(phone, message, smscodec.SubmitOptions{})
+ }
+ 
+ func (w *Worker) SendSMSWithOptions(phone, message string, opts smscodec.SubmitOptions) error {
++	if !workmode.SMSEnabled() {
++		return fmt.Errorf("当前为网卡模式，短信引擎已停用")
++	}
+ 	if w.Backend != nil {
+ 		ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
+ 		defer cancel()
+diff --git a/vohive/internal/qmi/manager.go b/vohive/internal/qmi/manager.go
+index 79e711f..f64dd3f 100644
+--- a/vohive/internal/qmi/manager.go
++++ b/vohive/internal/qmi/manager.go
+@@ -14,6 +14,7 @@ import (
+ 	"github.com/iniwex5/vohive/internal/apduarbiter"
+ 	"github.com/iniwex5/vohive/internal/config"
+ 	"github.com/iniwex5/vohive/internal/netprobe"
++	"github.com/iniwex5/vohive/internal/workmode"
+ 	"github.com/iniwex5/vohive/pkg/logger"
+ 
+ 	qmimanager "github.com/iniwex5/quectel-qmi-go/pkg/manager"
+@@ -847,10 +848,10 @@ func buildQMIManagerConfig(cfg config.DeviceConfig, device qmimanager.ModemDevic
+ 		EnableIPv4:      enableV4,
+ 		EnableIPv6:      enableV6,
+ 		AutoReconnect:   true,
+-		NoRoute:         false,         // 关键: 允许添加默认路由 (但在底层库中设置了高 Metric=512)
+-		NoDNS:           true,          // 关键: 不修改系统 DNS
+-		DisableWMSInd:   !isQMIBackend, // 如果是纯 QMI 模式，解禁 QMI WMS 以支持接收短信；否则（AT或Auto）禁用，以防与 AT URC 冲突
+-		NoDial:          true,          // 数据面统一走显式 Connect()/Disconnect()，禁止底层自动拨号
++		NoRoute:         false,                                   // 关键: 允许添加默认路由 (但在底层库中设置了高 Metric=512)
++		NoDNS:           true,                                    // 关键: 不修改系统 DNS
++		DisableWMSInd:   !isQMIBackend || !workmode.SMSEnabled(), // 数据模式从 QMI 底层关闭 WMS 指示。
++		NoDial:          true,                                    // 数据面统一走显式 Connect()/Disconnect()，禁止底层自动拨号
+ 		DataPlanePolicy: qmimanager.DataPlanePolicyLazy,
+ 		Timeouts: qmimanager.TimeoutConfig{
+ 			Init:               10 * time.Second,
+diff --git a/vohive/internal/workmode/work_mode.go b/vohive/internal/workmode/work_mode.go
+new file mode 100644
+index 0000000..f42af21
+--- /dev/null
++++ b/vohive/internal/workmode/work_mode.go
+@@ -0,0 +1,38 @@
++package workmode
++
++import (
++	"encoding/json"
++	"io"
++	"os"
++	"strings"
++)
++
++const defaultManagementState = "/var/lib/wangka-management/state.json"
++
++// SMSEnabled reports whether the appliance work mode allows the SMS engine to
++// run. Missing or malformed state deliberately fails open so stock VoHive
++// installations keep their original behaviour.
++func SMSEnabled() bool {
++	path := strings.TrimSpace(os.Getenv("WANGKA_MANAGEMENT_STATE"))
++	if path == "" {
++		path = defaultManagementState
++	}
++
++	file, err := os.Open(path)
++	if err != nil {
++		return true
++	}
++	defer file.Close()
++
++	raw, err := io.ReadAll(io.LimitReader(file, 64*1024+1))
++	if err != nil || len(raw) > 64*1024 {
++		return true
++	}
++	var state struct {
++		WorkMode string `json:"work_mode"`
++	}
++	if err := json.Unmarshal(raw, &state); err != nil {
++		return true
++	}
++	return strings.ToLower(strings.TrimSpace(state.WorkMode)) != "data"
++}
+diff --git a/vohive/internal/workmode/work_mode_test.go b/vohive/internal/workmode/work_mode_test.go
+new file mode 100644
+index 0000000..8b9f7c9
+--- /dev/null
++++ b/vohive/internal/workmode/work_mode_test.go
+@@ -0,0 +1,38 @@
++package workmode
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++)
++
++func TestSMSEnabledDefaultsToEnabled(t *testing.T) {
++	t.Setenv("WANGKA_MANAGEMENT_STATE", filepath.Join(t.TempDir(), "missing.json"))
++	if !SMSEnabled() {
++		t.Fatal("missing appliance state must preserve stock SMS behaviour")
++	}
++}
++
++func TestSMSEnabledReadsWorkMode(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "state.json")
++	t.Setenv("WANGKA_MANAGEMENT_STATE", path)
++	for _, tc := range []struct {
++		name    string
++		content string
++		want    bool
++	}{
++		{name: "dual", content: `{"work_mode":"dual"}`, want: true},
++		{name: "sms", content: `{"work_mode":"sms"}`, want: true},
++		{name: "data", content: `{"work_mode":"data"}`, want: false},
++		{name: "invalid", content: `{`, want: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			if err := os.WriteFile(path, []byte(tc.content), 0o600); err != nil {
++				t.Fatal(err)
++			}
++			if got := SMSEnabled(); got != tc.want {
++				t.Fatalf("SMSEnabled() = %v, want %v", got, tc.want)
++			}
++		})
++	}
++}

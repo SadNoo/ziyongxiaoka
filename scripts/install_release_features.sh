@@ -7,8 +7,9 @@ BUILDER_ROOT=${WANGKA_BUILDER_ROOT:-${PROJECT_ROOT}/tools/OpenStick-Builder}
 VOHIVE_DIR=${PROJECT_ROOT}/config/vohive
 NETWORK_DIR=${PROJECT_ROOT}/config/network
 TIME_DIR=${PROJECT_ROOT}/config/time
-VOHIVE_BINARY=${PROJECT_ROOT}/vendor/vohive/vohive_v1.5.5-10-gf9eb85d_linux_arm64
-VOHIVE_SHA256=4cbfcec06b719609f3d88714b4df63c420e1cf958fbad0b4851a3c495c595661
+SSH_DIR=${PROJECT_ROOT}/config/ssh
+VOHIVE_BINARY=${WANGKA_VOHIVE_BINARY:-${PROJECT_ROOT}/private/build/vohive_v1.5.5-wangka1_linux_arm64}
+VOHIVE_SHA256=1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a
 
 fail() {
     printf 'FAIL: %s\n' "$1" >&2
@@ -16,6 +17,7 @@ fail() {
 }
 
 [ -d "${ROOTFS}/etc" ] || fail "not a root filesystem: ${ROOTFS}"
+[ -f "${VOHIVE_BINARY}" ] || fail "patched VoHive is missing; run scripts/build_patched_vohive.sh first"
 [ -n "${WANGKA_USER_PASSWORD:-}" ] || fail "WANGKA_USER_PASSWORD is required"
 [ -n "${WANGKA_WIFI_PSK:-}" ] || fail "WANGKA_WIFI_PSK is required"
 [ -n "${WANGKA_VOHIVE_USERNAME:-}" ] || fail "WANGKA_VOHIVE_USERNAME is required"
@@ -63,10 +65,29 @@ install -d -m 0755 \
     "${ROOTFS}/usr/share/doc/vohive"
 install -d -m 0755 "${ROOTFS}/var/lib/wangka-network"
 
+# Release images must never inherit runtime data from a cached build tree.
+# Remove modem/SMS state, APN preferences, logs and SSH trust material before
+# writing the fixed factory configuration below.
+for clean_dir in \
+    "${ROOTFS}/var/lib/vohive/data" \
+    "${ROOTFS}/var/lib/vohive/logs" \
+    "${ROOTFS}/var/lib/wangka-network"; do
+    find "${clean_dir}" -mindepth 1 -depth -delete
+done
+for ssh_home in "${ROOTFS}/root/.ssh" "${ROOTFS}/home/user/.ssh"; do
+    if [ -d "${ssh_home}" ]; then
+        find "${ssh_home}" -mindepth 1 -depth -delete
+    fi
+done
+rm -f "${ROOTFS}/var/lib/dbus/machine-id"
+: > "${ROOTFS}/etc/machine-id"
+
 install -m 0755 "${VOHIVE_BINARY}" "${ROOTFS}/usr/local/sbin/vohive"
 install -m 0755 "${VOHIVE_BINARY}" "${ROOTFS}/usr/lib/wangka/vohive"
 install -m 0755 "${VOHIVE_DIR}/wangka-vohive-enroll.py" \
     "${ROOTFS}/usr/local/sbin/wangka-vohive-enroll"
+install -m 0755 "${VOHIVE_DIR}/wangka-vohive-qmi-owner.py" \
+    "${ROOTFS}/usr/local/sbin/wangka-vohive-qmi-owner"
 install -m 0755 "${VOHIVE_DIR}/wangka-management-proxy.py" \
     "${ROOTFS}/usr/local/sbin/wangka-management-proxy"
 install -m 0755 "${VOHIVE_DIR}/wangka-vohive-maintenance.sh" \
@@ -75,6 +96,8 @@ install -m 0755 "${NETWORK_DIR}/wangka-network-ready.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-network-ready"
 install -m 0755 "${NETWORK_DIR}/wangka-uplink-manager.py" \
     "${ROOTFS}/usr/local/sbin/wangka-uplink"
+install -m 0755 "${NETWORK_DIR}/wangka-work-mode.py" \
+    "${ROOTFS}/usr/local/sbin/wangka-work-mode"
 install -m 0755 "${TIME_DIR}/wangka-timekeeper.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-timekeeper"
 rm -f "${ROOTFS}/etc/NetworkManager/dispatcher.d/90-wangka-management-alias"
@@ -102,6 +125,8 @@ done
 for unit in wangka-timekeeper.service wangka-timekeeper-save.service wangka-timekeeper.timer; do
     install -m 0644 "${TIME_DIR}/${unit}" "${ROOTFS}/etc/systemd/system/${unit}"
 done
+install -m 0644 "${SSH_DIR}/wangka-ssh-host-keys.service" \
+    "${ROOTFS}/etc/systemd/system/wangka-ssh-host-keys.service"
 date -u +%s > "${ROOTFS}/usr/lib/wangka/build-epoch"
 chmod 0644 "${ROOTFS}/usr/lib/wangka/build-epoch"
 
@@ -113,11 +138,13 @@ sed \
 chmod 0600 "${ROOTFS}/etc/vohive/config.yaml"
 install -m 0600 "${ROOTFS}/etc/vohive/config.yaml" \
     "${ROOTFS}/usr/lib/wangka/vohive-default.yaml"
-if [ ! -f "${ROOTFS}/var/lib/wangka-management/state.json" ]; then
-    printf '%s\n' '{"generation": 0, "initialized": false, "uplink_mode": "device-uplink"}' \
-        > "${ROOTFS}/var/lib/wangka-management/state.json"
-    chmod 0600 "${ROOTFS}/var/lib/wangka-management/state.json"
-fi
+printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
+    > "${ROOTFS}/var/lib/wangka-management/state.json"
+chmod 0600 "${ROOTFS}/var/lib/wangka-management/state.json"
+printf '{"password":"%s","username":"%s"}\n' \
+    "${WANGKA_VOHIVE_PASSWORD}" "${WANGKA_VOHIVE_USERNAME}" \
+    > "${ROOTFS}/var/lib/wangka-management/vohive-local-auth.json"
+chmod 0600 "${ROOTFS}/var/lib/wangka-management/vohive-local-auth.json"
 
 # The builder runs inside Docker; never ship its private resolver address in
 # the device image. device-uplink starts with domestic fallback resolvers and
@@ -139,10 +166,18 @@ ln -sfn "/usr/share/zoneinfo/${WANGKA_TIMEZONE}" "${ROOTFS}/etc/localtime"
 printf '%s\n' "${WANGKA_TIMEZONE}" > "${ROOTFS}/etc/timezone"
 install -m 0755 "${BUILDER_ROOT}/scripts/msm-firmware-loader.sh" \
     "${ROOTFS}/usr/sbin/msm-firmware-loader.sh"
-install -m 0755 "${BUILDER_ROOT}/scripts/wangka-modem.sh" \
+install -m 0755 "${NETWORK_DIR}/wangka-modem.py" \
     "${ROOTFS}/usr/local/sbin/wangka-modem"
 install -d -m 0755 "${ROOTFS}/usr/local/bin"
 ln -sf ../sbin/wangka-modem "${ROOTFS}/usr/local/bin/wangka-modem"
+
+# One QMI owner is mandatory on this onboard modem.  VoHive provides LTE and
+# SMS together; mask ModemManager so its recovery loop cannot compete.
+ln -sfn /dev/null "${ROOTFS}/etc/systemd/system/ModemManager.service"
+rm -f "${ROOTFS}/etc/systemd/system/multi-user.target.wants/ModemManager.service"
+rm -f "${ROOTFS}/etc/systemd/system/dbus-org.freedesktop.ModemManager1.service"
+LTE_PROFILE="${ROOTFS}/etc/NetworkManager/system-connections/lte.nmconnection"
+rm -f "${LTE_PROFILE}"
 
 # NetworkManager owns its private dnsmasq instance for the two shared LANs.
 # Do not let the distro service compete for port 53, and do not delay boot for
@@ -162,6 +197,8 @@ ln -sf ../wangka-web-proxy.socket \
     "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-web-proxy.socket"
 ln -sf ../wangka-network-ready.service \
     "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-network-ready.service"
+ln -sf ../wangka-ssh-host-keys.service \
+    "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-ssh-host-keys.service"
 install -d -m 0755 \
     "${ROOTFS}/etc/systemd/system/sysinit.target.wants" \
     "${ROOTFS}/etc/systemd/system/timers.target.wants"
@@ -172,6 +209,15 @@ ln -sf ../wangka-timekeeper.timer \
 ln -sf ../wangka-uplink-reconcile.timer \
     "${ROOTFS}/etc/systemd/system/timers.target.wants/wangka-uplink-reconcile.timer"
 rm -f "${ROOTFS}/etc/systemd/system/sockets.target.wants/wangka-web-proxy.socket"
+
+# Host keys identify a physical SSH server.  Never clone the builder's keys
+# into every flashed device; remove all generated keys from the image and let
+# the first boot service create a unique set before ssh.service starts.
+for key_type in rsa ecdsa ed25519; do
+    rm -f \
+        "${ROOTFS}/etc/ssh/ssh_host_${key_type}_key" \
+        "${ROOTFS}/etc/ssh/ssh_host_${key_type}_key.pub"
+done
 
 printf 'FEATURE_INSTALL=PASS\n'
 printf 'FACTORY_SSH_PASSWORD=SET_AND_REDACTED\n'

@@ -22,16 +22,41 @@ CONFIG_PATH = "/etc/vohive/config.yaml"
 BASE_URL = "http://127.0.0.1:17575"
 
 
-def config_scalar(text: str, key: str) -> str:
-    match = re.search(rf"(?m)^  {re.escape(key)}:\s*(.+?)\s*$", text)
-    if not match:
-        raise RuntimeError(f"missing Web credential field: {key}")
-    value = match.group(1).strip()
+def decode_yaml_scalar(value: str) -> str:
+    value = value.strip()
     if value.startswith('"') and value.endswith('"'):
         return json.loads(value)
     if value.startswith("'") and value.endswith("'"):
-        return value[1:-1]
+        return value[1:-1].replace("''", "'")
     return value.split(" #", 1)[0].strip()
+
+
+def config_scalar(text: str, key: str) -> str:
+    web = re.search(r"(?m)^web:[ \t]*(.*)$", text)
+    if not web:
+        raise RuntimeError("missing Web config")
+
+    inline = web.group(1).lstrip()
+    if inline.startswith("{"):
+        value_pattern = (
+            r'"(?:\\.|[^"\\])*"'
+            r"|'(?:''|[^'])*'"
+            r"|[^,}\n#]+"
+        )
+        match = re.search(
+            rf"(?:^|[,{{])\s*{re.escape(key)}\s*:\s*({value_pattern})",
+            inline,
+        )
+    else:
+        following = text[web.end() :]
+        next_section = re.search(r"(?m)^[A-Za-z0-9_-]+:\s*", following)
+        section = following[: next_section.start()] if next_section else following
+        match = re.search(
+            rf"(?m)^[ \t]+{re.escape(key)}:\s*(.+?)\s*$", section
+        )
+    if not match:
+        raise RuntimeError(f"missing Web credential field: {key}")
+    return decode_yaml_scalar(match.group(1))
 
 
 def request_json(
