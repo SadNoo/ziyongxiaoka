@@ -26,6 +26,7 @@ class UplinkManagerTests(unittest.TestCase):
         os.environ["WANGKA_HOST_UPLINK_CONFIG"] = str(cls.root / "pairing.json")
         os.environ["WANGKA_HOST_UPLINK_FIREWALL"] = str(cls.root / "guard.nft")
         os.environ["WANGKA_RESOLV_CONF"] = str(cls.root / "resolv.conf")
+        os.environ["WANGKA_WLAN_OPERSTATE"] = str(cls.root / "wlan0-operstate")
         spec = importlib.util.spec_from_file_location("wangka_uplink_manager", MODULE_PATH)
         assert spec and spec.loader
         cls.module = importlib.util.module_from_spec(spec)
@@ -37,6 +38,8 @@ class UplinkManagerTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.module.save_state(self.module.default_state())
+        self.module.WLAN_OPERSTATE_PATH.write_text("up\n", encoding="ascii")
+        self.module.RESOLV_CONF.unlink(missing_ok=True)
         self.module.PAIRING_FILE.write_text(
             json.dumps(
                 {
@@ -106,6 +109,117 @@ class UplinkManagerTests(unittest.TestCase):
         with mock.patch.object(self.module, "run_command", return_value=""):
             result = self.module.device_mode_dns()
         self.assertEqual(result, ["114.114.114.114", "223.5.5.5"])
+
+    def test_device_mode_reconcile_refreshes_resolver(self) -> None:
+        with (
+            mock.patch.object(self.module, "recover_hotspot", return_value=True),
+            mock.patch.object(self.module, "recover_device_uplink", return_value=True),
+            mock.patch.object(self.module, "device_mode_dns", return_value=["223.5.5.5"]),
+            mock.patch.object(self.module, "write_resolv_conf") as resolver,
+            mock.patch.object(self.module, "status", return_value={"status": "ok"}),
+        ):
+            result = self.module.reconcile()
+        self.assertEqual(result["status"], "ok")
+        self.assertIs(result["hotspot_active"], True)
+        self.assertIs(result["device_uplink_active"], True)
+        self.assertIs(result["resolver_refreshed"], True)
+        resolver.assert_called_once_with(["223.5.5.5"], "device-uplink")
+
+    def test_steady_reconcile_avoids_nmcli_and_resolver_rewrite(self) -> None:
+        self.module.RESOLV_CONF.write_text(
+            "nameserver 114.114.114.114\n", encoding="ascii"
+        )
+        with (
+            mock.patch.object(self.module, "recover_device_uplink", return_value=True),
+            mock.patch.object(self.module, "device_mode_dns") as dns,
+            mock.patch.object(self.module, "write_resolv_conf") as resolver,
+            mock.patch.object(self.module, "status", return_value={"status": "ok"}),
+            mock.patch.object(self.module, "run_command") as command,
+        ):
+            result = self.module.reconcile()
+        self.assertIs(result["hotspot_active"], True)
+        self.assertIs(result["resolver_refreshed"], False)
+        dns.assert_not_called()
+        resolver.assert_not_called()
+        command.assert_not_called()
+
+    def test_sms_work_mode_does_not_reconnect_lte(self) -> None:
+        state = self.module.load_state()
+        state["work_mode"] = "sms"
+        self.module.save_state(state)
+        with (
+            mock.patch.object(self.module, "recover_hotspot", return_value=True),
+            mock.patch.object(self.module, "recover_device_uplink") as recover,
+            mock.patch.object(self.module, "device_mode_dns", return_value=["223.5.5.5"]),
+            mock.patch.object(self.module, "write_resolv_conf"),
+            mock.patch.object(self.module, "status", return_value={"status": "ok"}),
+        ):
+            result = self.module.reconcile()
+        recover.assert_not_called()
+        self.assertFalse(result["device_uplink_active"])
+        self.assertEqual(result["work_mode"], "sms")
+
+    def test_saved_lte_uplink_is_recovered_only_when_route_is_missing(self) -> None:
+        with (
+            mock.patch.object(
+                self.module, "wwan_default_ready", side_effect=[False, True]
+            ),
+            mock.patch.object(self.module, "device_uptime_seconds", return_value=181),
+            mock.patch.object(self.module, "run_command", return_value="") as command,
+        ):
+            self.assertIs(self.module.recover_device_uplink(), True)
+        command.assert_called_once_with(
+            [self.module.MODEM_CLI, "reconnect-saved-uplink"],
+            check=False,
+            timeout=110,
+        )
+
+    def test_lte_recovery_waits_for_modem_cold_start_grace(self) -> None:
+        with (
+            mock.patch.object(self.module, "wwan_default_ready", return_value=False),
+            mock.patch.object(self.module, "device_uptime_seconds", return_value=179),
+            mock.patch.object(self.module, "run_command") as command,
+        ):
+            self.assertIs(self.module.recover_device_uplink(), False)
+        command.assert_not_called()
+
+    def test_existing_lte_default_route_is_not_reconnected(self) -> None:
+        with (
+            mock.patch.object(self.module, "wwan_default_ready", return_value=True),
+            mock.patch.object(self.module, "run_command") as command,
+        ):
+            self.assertIs(self.module.recover_device_uplink(), True)
+        command.assert_not_called()
+
+    def test_hotspot_recovery_is_best_effort(self) -> None:
+        with (
+            mock.patch.object(
+                self.module,
+                "hotspot_interface_active",
+                side_effect=[False, True],
+            ),
+            mock.patch.object(self.module, "run_command", return_value="") as command,
+        ):
+            self.assertIs(self.module.recover_hotspot(), True)
+        command.assert_called_once_with(
+            [
+                "/usr/bin/nmcli",
+                "--wait",
+                "10",
+                "connection",
+                "up",
+                "hotspot",
+            ],
+            check=False,
+        )
+
+    def test_active_hotspot_is_not_restarted(self) -> None:
+        with (
+            mock.patch.object(self.module, "hotspot_interface_active", return_value=True),
+            mock.patch.object(self.module, "run_command") as command,
+        ):
+            self.assertIs(self.module.recover_hotspot(), True)
+        command.assert_not_called()
 
     def test_host_failure_rolls_back_to_device_mode(self) -> None:
         helper_payload = {
@@ -193,11 +307,27 @@ class UplinkManagerTests(unittest.TestCase):
             result = self.module.status()
         self.assertNotIn("token", json.dumps(result))
 
+    def test_device_uplink_status_does_not_probe_missing_mac_helper(self) -> None:
+        state = self.module.load_state()
+        state["uplink_mode"] = "device-uplink"
+        self.module.save_state(state)
+        with mock.patch.object(self.module, "helper_request") as helper:
+            result = self.module.status()
+        helper.assert_not_called()
+        self.assertIs(result["helper_checked"], False)
+
+    def test_operation_lock_rejects_duplicate_uplink_work(self) -> None:
+        with self.module.OperationLock() as first:
+            self.assertTrue(first.acquired)
+            with self.module.OperationLock() as second:
+                self.assertFalse(second.acquired)
+
     def test_first_renew_timeout_is_tolerated(self) -> None:
         state = self.module.load_state()
         state["uplink_mode"] = "host-uplink"
         self.module.save_state(state)
         with (
+            mock.patch.object(self.module, "recover_hotspot", return_value=True),
             mock.patch.object(
                 self.module,
                 "helper_request",
@@ -226,6 +356,7 @@ class UplinkManagerTests(unittest.TestCase):
             return {"status": "ok", "enabled": False}
 
         with (
+            mock.patch.object(self.module, "recover_hotspot", return_value=False),
             mock.patch.object(self.module, "helper_request", side_effect=fake_helper),
             mock.patch.object(self.module, "clear_host_network") as clear,
         ):
@@ -249,6 +380,7 @@ class UplinkManagerTests(unittest.TestCase):
             "lease_deadline_epoch": 1234,
         }
         with (
+            mock.patch.object(self.module, "recover_hotspot", return_value=True),
             mock.patch.object(self.module, "helper_request", return_value=helper_payload),
             mock.patch.object(self.module, "apply_host_network"),
         ):

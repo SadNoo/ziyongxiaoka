@@ -6,7 +6,7 @@ CANONICAL_BINARY=/usr/lib/wangka/vohive
 CANONICAL_CONFIG=/usr/lib/wangka/vohive-default.yaml
 LIVE_BINARY=/usr/local/sbin/vohive
 LIVE_CONFIG=/etc/vohive/config.yaml
-EXPECTED_SHA256=4cbfcec06b719609f3d88714b4df63c420e1cf958fbad0b4851a3c495c595661
+EXPECTED_SHA256=1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a
 
 require_root() {
     [ "$(id -u)" -eq 0 ] || {
@@ -44,7 +44,7 @@ case "$COMMAND" in
         fi
         if [ ! -f "$LIVE_CONFIG" ]; then
             install -m 0600 "$CANONICAL_CONFIG" "$LIVE_CONFIG"
-            printf '%s\n' '{"generation": 0, "initialized": false, "uplink_mode": "device-uplink"}' \
+            printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
                 > /var/lib/wangka-management/state.json
             chmod 0600 /var/lib/wangka-management/state.json
         fi

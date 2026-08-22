@@ -1,9 +1,10 @@
 [Unit]
 Description=Bring up the UFI103S USB and Wi-Fi management networks
 Requires=NetworkManager.service usb-gadget.service
-Wants=msm-firmware-loader.service
+# The firmware loader is enabled independently.  Pulling an already-finished
+# oneshot service in again replaces its tmpfs firmware tree while wlan0 probes.
 After=NetworkManager.service usb-gadget.service msm-firmware-loader.service
-Before=wangka-web-firewall.service wangka-web-proxy.socket vohive.service
+Before=wangka-web-firewall.service vohive.service
 
 [Service]
 Type=oneshot

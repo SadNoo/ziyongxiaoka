@@ -58,9 +58,13 @@ grep -q 'gt load cdc-ecm.scheme cdc-ecm' \
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/usb-gadget.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/msm-firmware-loader.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/resize-rootfs.service"
-require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/ModemManager.service"
+require_masked "${ROOT_MOUNT}/etc/systemd/system/ModemManager.service"
+[ ! -e "${ROOT_MOUNT}/etc/systemd/system/dbus-org.freedesktop.ModemManager1.service" ] \
+    && [ ! -L "${ROOT_MOUNT}/etc/systemd/system/dbus-org.freedesktop.ModemManager1.service" ] \
+    || fail "ModemManager D-Bus activation alias remains"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-network-ready.service"
+require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-ssh-host-keys.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/sysinit.target.wants/wangka-timekeeper.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-timekeeper.timer"
 require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-uplink-reconcile.timer"
@@ -75,7 +79,9 @@ require_masked "${ROOT_MOUNT}/etc/systemd/system/NetworkManager-wait-online.serv
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-modem"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink"
+require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-work-mode"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-network-ready.service"
+require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-ssh-host-keys.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-uplink-reconcile.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-uplink-reconcile.timer"
 require_file "${ROOT_MOUNT}/etc/nftables.d/wangka-host-uplink.nft"
@@ -84,6 +90,21 @@ require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-timekeeper.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-timekeeper-save.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-timekeeper.timer"
 require_file "${ROOT_MOUNT}/usr/lib/wangka/build-epoch"
+[ ! -s "${ROOT_MOUNT}/etc/machine-id" ] || fail "factory machine-id is not empty"
+[ ! -e "${ROOT_MOUNT}/var/lib/dbus/machine-id" ] \
+    || fail "cached D-Bus machine-id remains"
+for clean_dir in \
+    "${ROOT_MOUNT}/var/lib/vohive/data" \
+    "${ROOT_MOUNT}/var/lib/vohive/logs"; do
+    [ -z "$(find "${clean_dir}" -mindepth 1 -print -quit)" ] \
+        || fail "runtime data remains in ${clean_dir}"
+done
+for ssh_home in "${ROOT_MOUNT}/root/.ssh" "${ROOT_MOUNT}/home/user/.ssh"; do
+    if [ -d "${ssh_home}" ]; then
+        [ -z "$(find "${ssh_home}" -mindepth 1 -print -quit)" ] \
+            || fail "SSH trust material remains in ${ssh_home}"
+    fi
+done
 BUILD_EPOCH=$(sed -n '1p' "${ROOT_MOUNT}/usr/lib/wangka/build-epoch")
 case "${BUILD_EPOCH}" in ''|*[!0-9]*) fail "invalid build epoch" ;; esac
 [ "${BUILD_EPOCH}" -ge 1735689600 ] && [ "${BUILD_EPOCH}" -le 4102444800 ] \
@@ -99,6 +120,31 @@ grep -q 'connection up usb' "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready" 
     || fail "USB management network recovery missing"
 grep -q 'connection up hotspot' "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready" \
     || fail "Wi-Fi management network recovery missing"
+grep -q 'WANGKA_NETWORK_READY=PASS:USB_ONLY' \
+    "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready" \
+    || fail "USB-only degraded readiness path missing"
+grep -q '^Before=ssh.service$' \
+    "${ROOT_MOUNT}/etc/systemd/system/wangka-ssh-host-keys.service" \
+    || fail "SSH host key generation is not ordered before ssh.service"
+grep -q '^ExecStart=/usr/bin/ssh-keygen -A$' \
+    "${ROOT_MOUNT}/etc/systemd/system/wangka-ssh-host-keys.service" \
+    || fail "SSH host key generation command mismatch"
+for key_type in rsa ecdsa ed25519; do
+    [ ! -e "${ROOT_MOUNT}/etc/ssh/ssh_host_${key_type}_key" ] \
+        || fail "pre-generated SSH ${key_type} host private key remains"
+    [ ! -e "${ROOT_MOUNT}/etc/ssh/ssh_host_${key_type}_key.pub" ] \
+        || fail "pre-generated SSH ${key_type} host public key remains"
+done
+! grep -q '^Wants=msm-firmware-loader.service$' \
+    "${ROOT_MOUNT}/etc/systemd/system/wangka-network-ready.service" \
+    || fail "network readiness may destructively restart the firmware loader"
+grep -q '^def recover_hotspot()' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "periodic Wi-Fi hotspot recovery missing"
+grep -q 'reconnect-saved-uplink' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "saved LTE uplink recovery missing"
+grep -q '^MIN_DEVICE_RECOVERY_UPTIME_SECONDS = 180$' \
+    "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
+    || fail "LTE cold-start recovery grace missing"
 grep -q 'host-uplink failed and was rolled back' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
     || fail "host-uplink rollback state machine missing"
 grep -q '^MAX_CONSECUTIVE_RENEW_FAILURES = 2$' "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink" \
@@ -122,8 +168,15 @@ grep -q '^nameserver 223.5.5.5$' "${DEVICE_RESOLVER}" \
 [ -L "${ROOT_MOUNT}/etc/resolv.conf" ] \
     && [ "$(readlink "${ROOT_MOUNT}/etc/resolv.conf")" = /var/lib/wangka-network/resolv.conf ] \
     || fail "device resolver is not linked to atomic management state"
-grep -q 'sms-send NUMBER TEXT' "${ROOT_MOUNT}/usr/local/sbin/wangka-modem" || fail "SMS management command missing"
+grep -q 'subparsers.add_parser("sms-send")' "${ROOT_MOUNT}/usr/local/sbin/wangka-modem" \
+    || fail "SMS management command missing"
+grep -q '/api/devices/{DEVICE_ID}/network' "${ROOT_MOUNT}/usr/local/sbin/wangka-modem" \
+    || fail "LTE data command bypasses the VoHive QMI owner"
+grep -q '^def save_network_preference(' "${ROOT_MOUNT}/usr/local/sbin/wangka-modem" \
+    || fail "LTE reconnect preference persistence missing"
 require_link "${ROOT_MOUNT}/usr/local/bin/wangka-modem"
+LTE_PROFILE="${ROOT_MOUNT}/etc/NetworkManager/system-connections/lte.nmconnection"
+[ ! -e "${LTE_PROFILE}" ] || fail "cached LTE/APN profile remains"
 
 USB_PROFILE="${ROOT_MOUNT}/etc/NetworkManager/system-connections/usb.nmconnection"
 require_file "${USB_PROFILE}"
@@ -152,7 +205,7 @@ grep -q '^shared-dhcp-range=192.168.4.20,192.168.4.250$' "${HOTSPOT}" \
 VOHIVE_BIN="${ROOT_MOUNT}/usr/local/sbin/vohive"
 require_file "${VOHIVE_BIN}"
 [ "$(sha256sum "${VOHIVE_BIN}" | cut -d' ' -f1)" = \
-    '4cbfcec06b719609f3d88714b4df63c420e1cf958fbad0b4851a3c495c595661' ] \
+    '1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a' ] \
     || fail "VoHive ARM64 binary hash mismatch"
 require_file "${ROOT_MOUNT}/etc/vohive/config.yaml"
 [ "$(stat -c '%a' "${ROOT_MOUNT}/etc/vohive/config.yaml")" = '600' ] \
@@ -166,18 +219,41 @@ grep -q '^  username: "user"$' "${ROOT_MOUNT}/etc/vohive/config.yaml" \
 grep -q '^  password: "123456789"$' "${ROOT_MOUNT}/etc/vohive/config.yaml" \
     || fail "factory VoHive password mismatch"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-vohive-enroll"
+require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-vohive-qmi-owner"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-vohive"
+grep -q '^ExecStartPre=/usr/local/sbin/wangka-vohive-qmi-owner$' \
+    "${ROOT_MOUNT}/etc/systemd/system/vohive.service" \
+    || fail "VoHive single-QMI-owner preflight missing"
+grep -q '^Conflicts=ModemManager.service$' \
+    "${ROOT_MOUNT}/etc/systemd/system/vohive.service" \
+    || fail "VoHive and ModemManager conflict guard missing"
+grep -q '"device_backend": "qmi"' "${ROOT_MOUNT}/usr/local/sbin/wangka-vohive-enroll" \
+    || fail "VoHive enrollment is not QMI-owned"
 require_file "${ROOT_MOUNT}/usr/lib/wangka/vohive"
 [ "$(sha256sum "${ROOT_MOUNT}/usr/lib/wangka/vohive" | cut -d' ' -f1)" = \
-    '4cbfcec06b719609f3d88714b4df63c420e1cf958fbad0b4851a3c495c595661' ] \
+    '1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a' ] \
     || fail "canonical VoHive repair asset hash mismatch"
 require_file "${ROOT_MOUNT}/usr/lib/wangka/vohive-default.yaml"
 require_file "${ROOT_MOUNT}/var/lib/wangka-management/state.json"
 [ "$(stat -c '%a' "${ROOT_MOUNT}/var/lib/wangka-management/state.json")" = '600' ] \
     || fail "management state permissions are not 0600"
-grep -q '"initialized": false' "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
+grep -Eq '"initialized"[[:space:]]*:[[:space:]]*false' \
+    "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
     || fail "factory onboarding is not required"
+grep -Eq '"work_mode"[[:space:]]*:[[:space:]]*"dual"' \
+    "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
+    || fail "factory work mode is not dual"
+grep -Eq '"access_mode"[[:space:]]*:[[:space:]]*"login-required"' \
+    "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
+    || fail "factory login protection is not enabled"
+require_file "${ROOT_MOUNT}/var/lib/wangka-management/vohive-local-auth.json"
+[ "$(stat -c '%a' "${ROOT_MOUNT}/var/lib/wangka-management/vohive-local-auth.json")" = '600' ] \
+    || fail "local VoHive credential store permissions are not 0600"
+grep -q 'save_local_auth(password)' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
+    || fail "local VoHive credential synchronization missing"
+grep -q 'path == "/api/settings/password"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
+    || fail "unsynchronized upstream password route remains available"
 grep -q 'path == "/api/system/uninstall"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
     || fail "VoHive uninstall route is not blocked"
 grep -q '网页卸载已永久禁用' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
@@ -188,6 +264,10 @@ grep -q 'path == "/wangka/api/time"' "${ROOT_MOUNT}/usr/local/sbin/wangka-manage
     || fail "browser time synchronization endpoint missing"
 grep -q 'path == "/wangka/api/uplink"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
     || fail "protected uplink switch endpoint missing"
+grep -q 'path == "/wangka/api/work-mode"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
+    || fail "work mode endpoint missing"
+grep -q 'path == "/wangka/api/access-mode"' "${ROOT_MOUNT}/usr/local/sbin/wangka-management-proxy" \
+    || fail "optional login endpoint missing"
 [ ! -e "${ROOT_MOUNT}/etc/NetworkManager/dispatcher.d/90-wangka-management-alias" ] \
     || fail "obsolete Wi-Fi management alias remains"
 require_file "${ROOT_MOUNT}/etc/nftables.d/wangka-web.nft"
@@ -207,12 +287,12 @@ grep -q '^ListenStream=192.168.4.1:7575$' \
 grep -q '^ListenStream=192.168.5.1:7575$' \
     "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.socket" \
     || fail "VoHive USB protected 7575 listener mismatch"
+! grep -q 'wangka-network-ready.service' \
+    "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.socket" \
+    || fail "VoHive socket has a NetworkManager boot ordering cycle"
 grep -q '^ExecStart=/usr/local/sbin/wangka-management-proxy --socket-activation$' \
     "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.service" \
     || fail "protected management proxy service mismatch"
-grep -q '^Wants=wangka-uplink-reconcile.service$' \
-    "${ROOT_MOUNT}/etc/systemd/system/wangka-web-proxy.socket" \
-    || fail "management page does not reconcile host-uplink before startup"
 grep -q 'tcp dport 17575 drop' "${ROOT_MOUNT}/etc/nftables.d/wangka-web.nft" \
     || fail "raw VoHive backend is not blocked"
 
@@ -253,7 +333,7 @@ printf 'FACTORY_PASSWORD_POLICY=123456789\n'
 printf 'ONBOARDING_REQUIRED=YES\n'
 printf 'VOHIVE_UNINSTALL_BLOCKED=YES\n'
 printf 'MODEM_CLI=wangka-modem\n'
-printf 'VOHIVE_SHA256=4cbfcec06b719609f3d88714b4df63c420e1cf958fbad0b4851a3c495c595661\n'
+printf 'VOHIVE_SHA256=1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a\n'
 printf 'VOHIVE_USB_URL=http://192.168.5.1/\n'
 printf 'VOHIVE_WIFI_URL=http://192.168.4.1/\n'
 printf 'ROOTFS_USED_BYTES=%s\n' "${ROOT_USED}"

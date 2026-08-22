@@ -1,0 +1,469 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1E706D97727813F530B2E274 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE86B0C34CDC55CD8EA7E1A8 /* MockURLProtocol.swift */; };
+		348B4E9D04DBC917917D71D3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2397EC56A2F11121D9EC38C5 /* RootView.swift */; };
+		3823370D2D7509908AC1CDB2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDA2C7B869716FEC2EB9381 /* AppState.swift */; };
+		3962BF931FEF51C45B4C7B40 /* WangkaManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A650A6DF19D2724977F4E61 /* WangkaManagerTests.swift */; };
+		5515DEEDA58A074E0FF030C0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABF5628188BCFCBF82208498 /* Assets.xcassets */; };
+		5928CB0164DD83072D0A402E /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E07B6A6AA410B587D435B9 /* APIModels.swift */; };
+		62200DC441FB1D62D45C06A4 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624B4EA02CA72572112AF1F2 /* APIClient.swift */; };
+		64ECF7D552392B92E820FDBC /* SMSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EA209B59F6B55BBCBD4817A /* SMSView.swift */; };
+		7409E7B48E8FCF818BB62685 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FFAC2798925641DD8AA38A /* OverviewView.swift */; };
+		97D88B5FCCE422E38531EE01 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624B4EA02CA72572112AF1F2 /* APIClient.swift */; };
+		AD09FB81B4336B1B7152EFA8 /* WangkaManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1C4909417507D783871A99 /* WangkaManagerApp.swift */; };
+		B90C59072640BBD0FA6A279A /* LogsSettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */; };
+		D25DE336361A49012B2764E6 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E07B6A6AA410B587D435B9 /* APIModels.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2397EC56A2F11121D9EC38C5 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		2DDA2C7B869716FEC2EB9381 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		41FFAC2798925641DD8AA38A /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		624B4EA02CA72572112AF1F2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		6A650A6DF19D2724977F4E61 /* WangkaManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WangkaManagerTests.swift; sourceTree = "<group>"; };
+		78A32A1BE3EDD7834700FAA4 /* WangkaManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WangkaManager.entitlements; sourceTree = "<group>"; };
+		87053036FB17A65E19081036 /* WangkaManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WangkaManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8EA209B59F6B55BBCBD4817A /* SMSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMSView.swift; sourceTree = "<group>"; };
+		9A1C4909417507D783871A99 /* WangkaManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WangkaManagerApp.swift; sourceTree = "<group>"; };
+		ABF5628188BCFCBF82208498 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B2927D23D75702B7D1D44A98 /* WangkaManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WangkaManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E5E07B6A6AA410B587D435B9 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		EE86B0C34CDC55CD8EA7E1A8 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
+		EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogsSettingsViews.swift; sourceTree = "<group>"; };
+		F8D765FE285D6962FCDC571E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0705A814AD05C848CD241D2C /* State */ = {
+			isa = PBXGroup;
+			children = (
+				2DDA2C7B869716FEC2EB9381 /* AppState.swift */,
+			);
+			path = State;
+			sourceTree = "<group>";
+		};
+		3E96A3FCC3FF1559A15F0123 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				624B4EA02CA72572112AF1F2 /* APIClient.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		4A3FCAA59F6001D178577433 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */,
+				41FFAC2798925641DD8AA38A /* OverviewView.swift */,
+				2397EC56A2F11121D9EC38C5 /* RootView.swift */,
+				8EA209B59F6B55BBCBD4817A /* SMSView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		4E634EA7135A00AADC1310E4 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E5E07B6A6AA410B587D435B9 /* APIModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		78AB5CBDFB0EB668165F6F4C /* WangkaManagerTests */ = {
+			isa = PBXGroup;
+			children = (
+				EE86B0C34CDC55CD8EA7E1A8 /* MockURLProtocol.swift */,
+				6A650A6DF19D2724977F4E61 /* WangkaManagerTests.swift */,
+			);
+			path = WangkaManagerTests;
+			sourceTree = "<group>";
+		};
+		81198630E95A9958CC8AB3FD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B2927D23D75702B7D1D44A98 /* WangkaManager.app */,
+				87053036FB17A65E19081036 /* WangkaManagerTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9031C4840C6EE37A0D2E7F13 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				9A1C4909417507D783871A99 /* WangkaManagerApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E0089C4E9839B6BC5004B791 /* WangkaManager */ = {
+			isa = PBXGroup;
+			children = (
+				ABF5628188BCFCBF82208498 /* Assets.xcassets */,
+				F8D765FE285D6962FCDC571E /* Info.plist */,
+				78A32A1BE3EDD7834700FAA4 /* WangkaManager.entitlements */,
+				9031C4840C6EE37A0D2E7F13 /* App */,
+				4E634EA7135A00AADC1310E4 /* Models */,
+				3E96A3FCC3FF1559A15F0123 /* Networking */,
+				0705A814AD05C848CD241D2C /* State */,
+				4A3FCAA59F6001D178577433 /* Views */,
+			);
+			path = WangkaManager;
+			sourceTree = "<group>";
+		};
+		E11DB9BEBD277780528808C7 = {
+			isa = PBXGroup;
+			children = (
+				E0089C4E9839B6BC5004B791 /* WangkaManager */,
+				78AB5CBDFB0EB668165F6F4C /* WangkaManagerTests */,
+				81198630E95A9958CC8AB3FD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8E3056A0CD0983CB38020E98 /* WangkaManagerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD7E0CF1966346D38E5414B8 /* Build configuration list for PBXNativeTarget "WangkaManagerTests" */;
+			buildPhases = (
+				203EA1CDC49CB4AB00516624 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WangkaManagerTests;
+			packageProductDependencies = (
+			);
+			productName = WangkaManagerTests;
+			productReference = 87053036FB17A65E19081036 /* WangkaManagerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A61326DEFA12CB6CE65D0841 /* WangkaManager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E31BDB05C3D07629D04877B6 /* Build configuration list for PBXNativeTarget "WangkaManager" */;
+			buildPhases = (
+				8FA314213F093661D41A7FEA /* Sources */,
+				68C6DB5D38302C2113B3D3FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WangkaManager;
+			packageProductDependencies = (
+			);
+			productName = WangkaManager;
+			productReference = B2927D23D75702B7D1D44A98 /* WangkaManager.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5D1B2AB8D1BD13233F0BE4D5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					8E3056A0CD0983CB38020E98 = {
+						ProvisioningStyle = Automatic;
+					};
+					A61326DEFA12CB6CE65D0841 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 65D2442D3EA1EDDCB3F11400 /* Build configuration list for PBXProject "WangkaManager" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = E11DB9BEBD277780528808C7;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 81198630E95A9958CC8AB3FD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A61326DEFA12CB6CE65D0841 /* WangkaManager */,
+				8E3056A0CD0983CB38020E98 /* WangkaManagerTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		68C6DB5D38302C2113B3D3FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5515DEEDA58A074E0FF030C0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		203EA1CDC49CB4AB00516624 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				62200DC441FB1D62D45C06A4 /* APIClient.swift in Sources */,
+				5928CB0164DD83072D0A402E /* APIModels.swift in Sources */,
+				1E706D97727813F530B2E274 /* MockURLProtocol.swift in Sources */,
+				3962BF931FEF51C45B4C7B40 /* WangkaManagerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8FA314213F093661D41A7FEA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97D88B5FCCE422E38531EE01 /* APIClient.swift in Sources */,
+				D25DE336361A49012B2764E6 /* APIModels.swift in Sources */,
+				3823370D2D7509908AC1CDB2 /* AppState.swift in Sources */,
+				B90C59072640BBD0FA6A279A /* LogsSettingsViews.swift in Sources */,
+				7409E7B48E8FCF818BB62685 /* OverviewView.swift in Sources */,
+				348B4E9D04DBC917917D71D3 /* RootView.swift in Sources */,
+				64ECF7D552392B92E820FDBC /* SMSView.swift in Sources */,
+				AD09FB81B4336B1B7152EFA8 /* WangkaManagerApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		06AB362DE8D2BA0523762A36 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager.tests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		33415B4625319E3E70EBBDA3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager.tests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		72BE86F73A3D4F950683F61B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WangkaManager/WangkaManager.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 6;
+				INFOPLIST_FILE = WangkaManager/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WiSiM;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager;
+				PRODUCT_NAME = WiSiM;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		B96FF5DFC29BBD4248E07188 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D9D68B75DE95785ACB93AF94 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WangkaManager/WangkaManager.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 6;
+				INFOPLIST_FILE = WangkaManager/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WiSiM;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager;
+				PRODUCT_NAME = WiSiM;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E2BBE5671C2C7BD092218D1C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		65D2442D3EA1EDDCB3F11400 /* Build configuration list for PBXProject "WangkaManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2BBE5671C2C7BD092218D1C /* Debug */,
+				B96FF5DFC29BBD4248E07188 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DD7E0CF1966346D38E5414B8 /* Build configuration list for PBXNativeTarget "WangkaManagerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33415B4625319E3E70EBBDA3 /* Debug */,
+				06AB362DE8D2BA0523762A36 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E31BDB05C3D07629D04877B6 /* Build configuration list for PBXNativeTarget "WangkaManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D9D68B75DE95785ACB93AF94 /* Debug */,
+				72BE86F73A3D4F950683F61B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5D1B2AB8D1BD13233F0BE4D5 /* Project object */;
+}

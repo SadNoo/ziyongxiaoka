@@ -9,8 +9,8 @@ or replaces the license of a third-party component.
 1. Original project material
 
 Unless a file or directory carries a different notice, the original material
-in the repository root, config/, scripts/, src/, and tests/ is licensed under
-the PolyForm Noncommercial License 1.0.0. The complete terms are in:
+in the repository root, config/, host/, scripts/, src/, and tests/ is licensed
+under the PolyForm Noncommercial License 1.0.0. The complete terms are in:
 
     LICENSES/PolyForm-Noncommercial-1.0.0.txt
 
@@ -30,6 +30,18 @@ The following paths are not relicensed as original project material:
 - vendor/gadget-tools/gt: Apache License 2.0.
 - vendor/gadget-tools/libusbgx.so.2.0.0: GNU Lesser General Public License
   version 2.1 or later.
+- patches/vohive-collection-wangka-work-modes.patch and the patched VoHive
+  binary embedded in release images: upstream PolyForm Noncommercial License
+  1.0.0 and Required Notice.
+- tools/edl when included in a release asset: GNU General Public License
+  version 3, plus the upstream README notice.
+- the Firehose loader included in a release asset: not relicensed; provenance,
+  hash and the upstream repair-use statement are in THIRD_PARTY_NOTICES.md.
+- aboot.mbn and hyp.mbn in a release asset: generated from the pinned lk2nd
+  and qhypstub sources under their upstream licenses.
+- tz.mbn in a release asset: Qualcomm redistributable binary code, subject to
+  the included DragonBoard 410c license agreement and restricted to Qualcomm
+  chipset platforms.
 
 Complete third-party license texts, source references, hashes, and notices
 are provided in LICENSES/, THIRD_PARTY_NOTICES.md, and the corresponding

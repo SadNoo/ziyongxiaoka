@@ -1,8 +1,8 @@
 [Unit]
 Description=VoHive port-free local management sockets
-Requires=wangka-network-ready.service
-Wants=wangka-uplink-reconcile.service
-After=wangka-network-ready.service wangka-uplink-reconcile.service
+# FreeBind lets these fixed private listeners start before their addresses are
+# configured.  Do not order a socket unit after NetworkManager: socket units
+# are implicitly before sockets.target and that would create a boot cycle.
 
 [Socket]
 ListenStream=192.168.4.1:80

@@ -25,7 +25,8 @@ from urllib.request import Request, urlopen
 
 STATE_DIR = Path(os.environ.get("WANGKA_STATE_DIR", "/var/lib/wangka-management"))
 STATE_FILE = STATE_DIR / "state.json"
-LOCK_FILE = STATE_DIR / "uplink.lock"
+LOCK_FILE = STATE_DIR / "state.lock"
+OPERATION_LOCK_FILE = STATE_DIR / "uplink-operation.lock"
 PAIRING_FILE = Path(
     os.environ.get("WANGKA_HOST_UPLINK_CONFIG", "/etc/wangka/host-uplink.json")
 )
@@ -36,11 +37,18 @@ HOST_FIREWALL = Path(
 )
 USB_CONNECTION = "usb"
 USB_INTERFACE = "usb0"
+HOTSPOT_CONNECTION = "hotspot"
+MODEM_CLI = os.environ.get("WANGKA_MODEM_CLI", "/usr/local/sbin/wangka-modem")
+UPTIME_PATH = Path(os.environ.get("WANGKA_UPTIME_PATH", "/proc/uptime"))
+WLAN_OPERSTATE_PATH = Path(
+    os.environ.get("WANGKA_WLAN_OPERSTATE", "/sys/class/net/wlan0/operstate")
+)
 DEVICE_ADDRESS = "192.168.5.1"
 EXPECTED_HOST = "192.168.5.242"
 EXPECTED_PORT = 19531
 HOST_ROUTE_METRIC = 50
 MAX_CONSECUTIVE_RENEW_FAILURES = 2
+MIN_DEVICE_RECOVERY_UPTIME_SECONDS = 180
 RESOLV_CONF = Path(
     os.environ.get(
         "WANGKA_RESOLV_CONF", "/var/lib/wangka-network/resolv.conf"
@@ -56,7 +64,13 @@ class UplinkError(RuntimeError):
 
 
 def default_state() -> dict[str, Any]:
-    return {"initialized": False, "generation": 0, "uplink_mode": "device-uplink"}
+    return {
+        "initialized": False,
+        "generation": 0,
+        "uplink_mode": "device-uplink",
+        "work_mode": "dual",
+        "access_mode": "login-required",
+    }
 
 
 def load_state() -> dict[str, Any]:
@@ -104,8 +118,42 @@ class StateLock:
         self.stream.close()
 
 
+class OperationLock:
+    """Bound mutating uplink work to one helper process at a time."""
+
+    def __init__(self) -> None:
+        self.stream: Any = None
+        self.acquired = False
+
+    def __enter__(self) -> "OperationLock":
+        STATE_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+        self.stream = OPERATION_LOCK_FILE.open("a+", encoding="ascii")
+        os.chmod(OPERATION_LOCK_FILE, 0o600)
+        try:
+            fcntl.flock(
+                self.stream.fileno(),
+                fcntl.LOCK_EX | fcntl.LOCK_NB,
+            )
+            self.acquired = True
+        except BlockingIOError:
+            self.acquired = False
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        if self.stream is None:
+            return
+        if self.acquired:
+            fcntl.flock(self.stream.fileno(), fcntl.LOCK_UN)
+        self.stream.close()
+        self.stream = None
+
+
 def run_command(
-    args: list[str], *, input_text: Optional[str] = None, check: bool = True
+    args: list[str],
+    *,
+    input_text: Optional[str] = None,
+    check: bool = True,
+    timeout: float = 20,
 ) -> str:
     result = subprocess.run(
         args,
@@ -113,7 +161,7 @@ def run_command(
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        timeout=20,
+        timeout=timeout,
         check=False,
     )
     if check and result.returncode != 0:
@@ -347,6 +395,94 @@ def device_mode_dns() -> list[str]:
     return servers[:3] or list(FALLBACK_DEVICE_DNS)
 
 
+def connection_is_active(name: str) -> bool:
+    output = run_command(
+        ["/usr/bin/nmcli", "-t", "-f", "NAME", "connection", "show", "--active"],
+        check=False,
+    )
+    return name in output.splitlines()
+
+
+def hotspot_interface_active() -> bool:
+    try:
+        return WLAN_OPERSTATE_PATH.read_text(encoding="ascii").strip() == "up"
+    except OSError:
+        return False
+
+
+def recover_hotspot() -> bool:
+    """Best-effort Wi-Fi recovery without blocking USB, VoHive or LTE."""
+    # Reading sysfs is effectively free. Starting nmcli every 30 seconds on
+    # this small CPU consumed several seconds of CPU per timer cycle even
+    # while the hotspot was already healthy.
+    if hotspot_interface_active():
+        return True
+    run_command(
+        [
+            "/usr/bin/nmcli",
+            "--wait",
+            "10",
+            "connection",
+            "up",
+            HOTSPOT_CONNECTION,
+        ],
+        check=False,
+    )
+    return hotspot_interface_active() or connection_is_active(HOTSPOT_CONNECTION)
+
+
+def resolver_ready() -> bool:
+    try:
+        if RESOLV_CONF.stat().st_size > 16 * 1024:
+            return False
+        content = RESOLV_CONF.read_text(encoding="ascii")
+    except (OSError, UnicodeError):
+        return False
+    for line in content.splitlines():
+        key, _, value = line.partition(" ")
+        if key != "nameserver":
+            continue
+        try:
+            validate_ipv4(value.strip())
+            return True
+        except UplinkError:
+            continue
+    return False
+
+
+def wwan_default_ready() -> bool:
+    output = run_command(
+        ["/usr/sbin/ip", "-4", "route", "show", "default"], check=False
+    )
+    return any(" dev wwan0 " in f" {line} " for line in output.splitlines())
+
+
+def device_uptime_seconds() -> float:
+    try:
+        return float(UPTIME_PATH.read_text(encoding="ascii").split()[0])
+    except (OSError, ValueError, IndexError):
+        # An unknown uptime must fail closed: never cycle packet data during
+        # an indeterminate boot phase.
+        return 0.0
+
+
+def recover_device_uplink() -> bool:
+    """Restore a previously enabled LTE route through the VoHive owner."""
+    if wwan_default_ready():
+        return True
+    # The onboard modem performs one intentional remoteproc reset and a cold
+    # QMI warm-up during normal boot. VoHive then restores packet data itself.
+    # Intervening before that sequence completes can extend USB/QMI downtime.
+    if device_uptime_seconds() < MIN_DEVICE_RECOVERY_UPTIME_SECONDS:
+        return False
+    run_command(
+        [MODEM_CLI, "reconnect-saved-uplink"],
+        check=False,
+        timeout=110,
+    )
+    return wwan_default_ready()
+
+
 def update_result(
     state: dict[str, Any], mode: str, result: str, error: str = ""
 ) -> dict[str, Any]:
@@ -429,8 +565,15 @@ def status() -> dict[str, Any]:
     }
     if not PAIRING_FILE.is_file():
         return response
+    if response["mode"] != "host-uplink":
+        # Do not contact the Mac helper on every device status refresh while
+        # the device owns its uplink. A missing Mac used to add seconds of
+        # latency and could queue status helpers behind a mode transition.
+        response["helper_checked"] = False
+        return response
     try:
         helper = helper_request("status", timeout=3.0)
+        response["helper_checked"] = True
         response["helper_reachable"] = True
         response["helper_enabled"] = helper.get("enabled") is True
         response["helper"] = sanitize_helper(helper)
@@ -440,9 +583,27 @@ def status() -> dict[str, Any]:
 
 
 def reconcile() -> dict[str, Any]:
+    hotspot_active = recover_hotspot()
     state = load_state()
     if state.get("uplink_mode") != "host-uplink":
-        return status()
+        # SMS-only mode deliberately keeps packet data down.  Do not let the
+        # periodic uplink recovery undo the selected work mode after boot.
+        sms_only = state.get("work_mode") == "sms"
+        device_uplink_active = False if sms_only else recover_device_uplink()
+        # LTE may register after boot.  Keep the resolver synchronized with
+        # the active device uplink and retain the domestic fallback when the
+        # carrier exposes no usable IPv4 DNS. A healthy resolver is left
+        # untouched so steady-state reconciliation never starts nmcli.
+        resolver_refreshed = False
+        if not resolver_ready():
+            write_resolv_conf(device_mode_dns(), "device-uplink")
+            resolver_refreshed = True
+        result = status()
+        result["hotspot_active"] = hotspot_active
+        result["device_uplink_active"] = device_uplink_active
+        result["resolver_refreshed"] = resolver_refreshed
+        result["work_mode"] = state.get("work_mode", "dual")
+        return result
     try:
         helper_status = helper_request("enable")
         host, dns_servers = validate_enable_response(helper_status)
@@ -454,7 +615,12 @@ def reconcile() -> dict[str, Any]:
         state["uplink_last_result"] = "renewed"
         state["uplink_last_error"] = ""
         save_state(state)
-        return {"status": "ok", "mode": "host-uplink", "helper": sanitize_helper(helper_status)}
+        return {
+            "status": "ok",
+            "mode": "host-uplink",
+            "hotspot_active": hotspot_active,
+            "helper": sanitize_helper(helper_status),
+        }
     except (UplinkError, OSError, subprocess.TimeoutExpired) as exc:
         failures = int(state.get("uplink_renew_failures", 0)) + 1
         if failures < MAX_CONSECUTIVE_RENEW_FAILURES:
@@ -465,6 +631,7 @@ def reconcile() -> dict[str, Any]:
             return {
                 "status": "ok",
                 "mode": "host-uplink",
+                "hotspot_active": hotspot_active,
                 "warning": "temporary host helper timeout; retry scheduled",
                 "renew_failures": failures,
             }
@@ -487,15 +654,26 @@ def main() -> int:
     parser.add_argument("action", choices=["status", "host-uplink", "device-uplink", "reconcile"])
     args = parser.parse_args()
     try:
-        with StateLock():
-            if args.action == "status":
-                result = status()
-            elif args.action == "host-uplink":
-                result = switch_host()
-            elif args.action == "device-uplink":
-                result = switch_device()
-            else:
-                result = reconcile()
+        if args.action == "status":
+            # State writes are atomic, so this read-only path must not wait
+            # behind slow modem or NetworkManager operations.
+            result = status()
+        else:
+            with OperationLock() as operation:
+                if not operation.acquired:
+                    if args.action == "reconcile":
+                        result = status()
+                        result["reconcile_skipped"] = "uplink-operation-in-progress"
+                    else:
+                        raise UplinkError("another uplink operation is already running")
+                else:
+                    with StateLock():
+                        if args.action == "host-uplink":
+                            result = switch_host()
+                        elif args.action == "device-uplink":
+                            result = switch_device()
+                        else:
+                            result = reconcile()
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
     except (UplinkError, OSError, subprocess.TimeoutExpired) as exc:
