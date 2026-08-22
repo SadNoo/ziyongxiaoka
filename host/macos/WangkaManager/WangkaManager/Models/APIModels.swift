@@ -111,6 +111,7 @@ struct Capabilities: Decodable, Sendable {
     let authRequired: Bool
     let accessMode: String
     let workModes: [WorkMode]
+    let ledControl: Bool?
     let keychainUsed: Bool
 
     enum CodingKeys: String, CodingKey {
@@ -118,7 +119,36 @@ struct Capabilities: Decodable, Sendable {
         case authRequired = "auth_required"
         case accessMode = "access_mode"
         case workModes = "work_modes"
+        case ledControl = "led_control"
         case keychainUsed = "keychain_used"
+    }
+}
+
+struct LEDStatus: Decodable, Sendable {
+    let status: String
+    let available: Bool
+    let enabled: Bool
+    let nightMode: Bool
+    let modeColor: String
+    let modeColorLabel: String
+    let color: String
+    let colorLabel: String
+    let pattern: String
+    let patternLabel: String
+    let meaning: String
+    let source: String
+
+    var currentAppearance: String {
+        pattern == "off" ? colorLabel : "\(colorLabel)\(patternLabel)"
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case status, available, enabled, color, pattern, meaning, source
+        case nightMode = "night_mode"
+        case modeColor = "mode_color"
+        case modeColorLabel = "mode_color_label"
+        case colorLabel = "color_label"
+        case patternLabel = "pattern_label"
     }
 }
 
@@ -179,6 +209,7 @@ struct ApplianceStatus: Decodable, Sendable {
     let uplinkMode: String
     let workMode: WorkModeStatus
     let thermal: ThermalStatus
+    let led: LEDStatus?
     let accessMode: String
     let authRequired: Bool
     let vohiveActive: Bool
@@ -186,7 +217,7 @@ struct ApplianceStatus: Decodable, Sendable {
     let timezone: String
 
     enum CodingKeys: String, CodingKey {
-        case initialized, generation, thermal, timezone
+        case initialized, generation, thermal, led, timezone
         case wifiSSID = "wifi_ssid"
         case uplinkMode = "uplink_mode"
         case workMode = "work_mode"

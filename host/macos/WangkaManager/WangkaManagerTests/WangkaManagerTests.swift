@@ -53,7 +53,30 @@ final class WangkaManagerTests: XCTestCase {
         XCTAssertTrue(result.authRequired)
         XCTAssertEqual(result.accessMode, "login-required")
         XCTAssertEqual(result.workModes, [.dual, .data, .sms])
+        XCTAssertNil(result.ledControl)
         XCTAssertFalse(result.keychainUsed)
+    }
+
+    func testLEDSettingsUseDedicatedManagementEndpoint() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/wangka/api/led")
+            XCTAssertEqual(request.httpMethod, "POST")
+            let object = try XCTUnwrap(
+                JSONSerialization.jsonObject(with: try Self.bodyData(from: request)) as? [String: Any]
+            )
+            XCTAssertEqual(object["enabled"] as? Bool, false)
+            XCTAssertEqual(object["night_mode"] as? Bool, true)
+            return Self.response(
+                for: request,
+                json: #"{"status":"ok","available":true,"enabled":false,"night_mode":true,"mode_color":"white","mode_color_label":"白色","color":"off","color_label":"熄灭","pattern":"off","pattern_label":"熄灭","meaning":"状态灯已关闭","source":"setting"}"#
+            )
+        }
+
+        let result = try await client.updateLED(enabled: false, nightMode: true)
+        XCTAssertFalse(result.enabled)
+        XCTAssertTrue(result.nightMode)
+        XCTAssertEqual(result.modeColor, "white")
+        XCTAssertEqual(result.currentAppearance, "熄灭")
     }
 
     func testBearerTokenIsOnlyAddedAfterBeingSet() async throws {
@@ -498,6 +521,20 @@ final class WangkaManagerTests: XCTestCase {
             "critical_c": 92,
             "sensors": []
           },
+          "led": {
+            "status": "ok",
+            "available": true,
+            "enabled": true,
+            "night_mode": false,
+            "mode_color": "white",
+            "mode_color_label": "白色",
+            "color": "white",
+            "color_label": "白色",
+            "pattern": "steady",
+            "pattern_label": "常亮",
+            "meaning": "双模式运行正常",
+            "source": "work-mode"
+          },
           "access_mode": "login-required",
           "auth_required": true,
           "vohive_active": true,
@@ -530,6 +567,20 @@ final class WangkaManagerTests: XCTestCase {
         "warning_c": 85,
         "critical_c": 92,
         "sensors": [{"name":"cpu-thermal","temperature_c":47.5,"level":"normal"}]
+      },
+      "led": {
+        "status": "ok",
+        "available": true,
+        "enabled": true,
+        "night_mode": false,
+        "mode_color": "white",
+        "mode_color_label": "白色",
+        "color": "white",
+        "color_label": "白色",
+        "pattern": "steady",
+        "pattern_label": "常亮",
+        "meaning": "双模式运行正常",
+        "source": "work-mode"
       },
       "access_mode": "login-required",
       "auth_required": true,

@@ -8,6 +8,7 @@ VOHIVE_DIR=${PROJECT_ROOT}/config/vohive
 NETWORK_DIR=${PROJECT_ROOT}/config/network
 TIME_DIR=${PROJECT_ROOT}/config/time
 SSH_DIR=${PROJECT_ROOT}/config/ssh
+LED_DIR=${PROJECT_ROOT}/config/led
 VOHIVE_BINARY=${WANGKA_VOHIVE_BINARY:-${PROJECT_ROOT}/private/build/vohive_v1.5.5-wangka1_linux_arm64}
 VOHIVE_SHA256=1a624e443e1b96fee4083db91937398a95a9c75f8e32675c5eded036139c614a
 
@@ -98,6 +99,8 @@ install -m 0755 "${NETWORK_DIR}/wangka-uplink-manager.py" \
     "${ROOTFS}/usr/local/sbin/wangka-uplink"
 install -m 0755 "${NETWORK_DIR}/wangka-work-mode.py" \
     "${ROOTFS}/usr/local/sbin/wangka-work-mode"
+install -m 0755 "${LED_DIR}/wangka-led-controller.py" \
+    "${ROOTFS}/usr/local/sbin/wangka-led"
 install -m 0755 "${TIME_DIR}/wangka-timekeeper.sh" \
     "${ROOTFS}/usr/local/sbin/wangka-timekeeper"
 rm -f "${ROOTFS}/etc/NetworkManager/dispatcher.d/90-wangka-management-alias"
@@ -127,6 +130,8 @@ for unit in wangka-timekeeper.service wangka-timekeeper-save.service wangka-time
 done
 install -m 0644 "${SSH_DIR}/wangka-ssh-host-keys.service" \
     "${ROOTFS}/etc/systemd/system/wangka-ssh-host-keys.service"
+install -m 0644 "${LED_DIR}/wangka-led.service" \
+    "${ROOTFS}/etc/systemd/system/wangka-led.service"
 date -u +%s > "${ROOTFS}/usr/lib/wangka/build-epoch"
 chmod 0644 "${ROOTFS}/usr/lib/wangka/build-epoch"
 
@@ -138,7 +143,7 @@ sed \
 chmod 0600 "${ROOTFS}/etc/vohive/config.yaml"
 install -m 0600 "${ROOTFS}/etc/vohive/config.yaml" \
     "${ROOTFS}/usr/lib/wangka/vohive-default.yaml"
-printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
+printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"led_enabled":true,"led_night_mode":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
     > "${ROOTFS}/var/lib/wangka-management/state.json"
 chmod 0600 "${ROOTFS}/var/lib/wangka-management/state.json"
 printf '{"password":"%s","username":"%s"}\n' \
@@ -199,6 +204,8 @@ ln -sf ../wangka-network-ready.service \
     "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-network-ready.service"
 ln -sf ../wangka-ssh-host-keys.service \
     "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-ssh-host-keys.service"
+ln -sf ../wangka-led.service \
+    "${ROOTFS}/etc/systemd/system/multi-user.target.wants/wangka-led.service"
 install -d -m 0755 \
     "${ROOTFS}/etc/systemd/system/sysinit.target.wants" \
     "${ROOTFS}/etc/systemd/system/timers.target.wants"

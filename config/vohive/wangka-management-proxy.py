@@ -44,6 +44,10 @@ UPLINK_COMMAND = os.environ.get("WANGKA_UPLINK_COMMAND", "/usr/local/sbin/wangka
 WORK_MODE_COMMAND = os.environ.get(
     "WANGKA_WORK_MODE_COMMAND", "/usr/local/sbin/wangka-work-mode"
 )
+LED_COMMAND = os.environ.get("WANGKA_LED_COMMAND", "/usr/local/sbin/wangka-led")
+LED_RUNTIME_FILE = Path(
+    os.environ.get("WANGKA_LED_RUNTIME", "/run/wangka-led/status.json")
+)
 THERMAL_ROOT = Path(os.environ.get("WANGKA_THERMAL_ROOT", "/sys/class/thermal"))
 ACCESS_MODES = {"login-required", "trusted-network"}
 LOCAL_BROWSER_TOKEN = "wangka-local-access"
@@ -125,7 +129,7 @@ try {
 EXPERIENCE_SCRIPT = r"""
 <style id="wangka-experience-style">
 .wangka-feature-panel{margin:0 0 24px;padding:18px;border:1px solid rgba(128,128,150,.28);border-radius:16px;background:var(--el-bg-color,#fff);box-shadow:0 8px 24px rgba(25,28,45,.04)}
-.wangka-feature-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.wangka-feature-title{font-size:16px;font-weight:800}.wangka-feature-subtitle{font-size:12px;color:#8b8d9b;margin-top:4px}.wangka-mode-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.wangka-mode-button{border:1px solid rgba(128,128,150,.28);border-radius:12px;padding:12px;background:transparent;color:inherit;text-align:left;cursor:pointer}.wangka-mode-button strong,.wangka-mode-button span{display:block}.wangka-mode-button span{font-size:12px;color:#8b8d9b;margin-top:4px}.wangka-mode-button.active{border-color:#6366f1;background:rgba(99,102,241,.12);box-shadow:inset 0 0 0 1px #6366f1}.wangka-mode-button:disabled{opacity:.55;cursor:wait}.wangka-mode-status{font-size:12px;color:#8b8d9b;margin-top:12px;white-space:pre-wrap}.wangka-temp-row{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.wangka-temp{font-size:12px;border-radius:999px;padding:5px 9px;background:rgba(22,163,74,.12);color:#15803d}.wangka-temp.warning{background:rgba(217,119,6,.14);color:#b45309}.wangka-temp.critical{background:rgba(220,38,38,.14);color:#dc2626}.wangka-sms-hint{margin:0 0 16px;padding:11px 14px;border-radius:12px;background:rgba(99,102,241,.10);color:#5558c9;font-size:13px}.wangka-access-row{display:flex;align-items:center;justify-content:space-between;gap:20px}.wangka-access-copy{max-width:680px}.wangka-access-toggle{border:0;border-radius:10px;padding:10px 16px;background:#5b5bd6;color:#fff;font-weight:750;cursor:pointer}.wangka-access-toggle:disabled{opacity:.55}.wangka-access-badge{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:99px;font-size:11px;background:rgba(22,163,74,.12);color:#15803d}.wangka-access-badge.off{background:rgba(217,119,6,.14);color:#b45309}@media(max-width:700px){.wangka-mode-buttons{grid-template-columns:1fr}.wangka-feature-head,.wangka-access-row{flex-direction:column}.wangka-temp-row{justify-content:flex-start}}
+.wangka-feature-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.wangka-feature-title{font-size:16px;font-weight:800}.wangka-feature-subtitle{font-size:12px;color:#8b8d9b;margin-top:4px}.wangka-mode-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.wangka-mode-button{border:1px solid rgba(128,128,150,.28);border-radius:12px;padding:12px;background:transparent;color:inherit;text-align:left;cursor:pointer}.wangka-mode-button strong,.wangka-mode-button span{display:block}.wangka-mode-button span{font-size:12px;color:#8b8d9b;margin-top:4px}.wangka-mode-button.active{border-color:#6366f1;background:rgba(99,102,241,.12);box-shadow:inset 0 0 0 1px #6366f1}.wangka-mode-button:disabled{opacity:.55;cursor:wait}.wangka-mode-status{font-size:12px;color:#8b8d9b;margin-top:12px;white-space:pre-wrap}.wangka-led-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(128,128,150,.20)}.wangka-led-state{display:flex;align-items:center;gap:10px;min-width:0}.wangka-led-dot{width:18px;height:18px;flex:0 0 18px;border-radius:50%;border:1px solid rgba(128,128,150,.4);box-shadow:0 0 8px rgba(80,80,95,.25)}.wangka-led-copy{font-size:12px;color:#8b8d9b;white-space:pre-wrap}.wangka-led-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.wangka-led-controls label{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}.wangka-led-controls input{width:16px;height:16px}.wangka-temp-row{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.wangka-temp{font-size:12px;border-radius:999px;padding:5px 9px;background:rgba(22,163,74,.12);color:#15803d}.wangka-temp.warning{background:rgba(217,119,6,.14);color:#b45309}.wangka-temp.critical{background:rgba(220,38,38,.14);color:#dc2626}.wangka-sms-hint{margin:0 0 16px;padding:11px 14px;border-radius:12px;background:rgba(99,102,241,.10);color:#5558c9;font-size:13px}.wangka-access-row{display:flex;align-items:center;justify-content:space-between;gap:20px}.wangka-access-copy{max-width:680px}.wangka-access-toggle{border:0;border-radius:10px;padding:10px 16px;background:#5b5bd6;color:#fff;font-weight:750;cursor:pointer}.wangka-access-toggle:disabled{opacity:.55}.wangka-access-badge{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:99px;font-size:11px;background:rgba(22,163,74,.12);color:#15803d}.wangka-access-badge.off{background:rgba(217,119,6,.14);color:#b45309}@media(max-width:700px){.wangka-mode-buttons{grid-template-columns:1fr}.wangka-feature-head,.wangka-access-row,.wangka-led-row{flex-direction:column}.wangka-temp-row{justify-content:flex-start}.wangka-led-row{align-items:flex-start}}
 @media(prefers-color-scheme:dark){.wangka-feature-panel{background:#1c1c22}.wangka-temp{color:#4ade80}.wangka-temp.warning{color:#fbbf24}.wangka-temp.critical{color:#f87171}.wangka-sms-hint{color:#b8b9ff}}
 </style>
 <script id="wangka-experience-script">
@@ -136,6 +140,7 @@ EXPERIENCE_SCRIPT = r"""
     data: ['网卡模式', '上网运行，短信引擎停用'],
     sms: ['短信模式', '短信运行，蜂窝数据停用']
   };
+  const ledColors = {off:'transparent',red:'#ef4444',green:'#22c55e',blue:'#3b82f6',yellow:'#eab308',cyan:'#06b6d4',magenta:'#d946ef',white:'#ffffff'};
   let capabilities = null;
   let latestStatus = null;
   const token = () => { try { return localStorage.getItem('token') || ''; } catch (_) { return ''; } };
@@ -199,6 +204,27 @@ EXPERIENCE_SCRIPT = r"""
     let text = status.work_mode.transition ? `正在切换到：${modeCopy[status.work_mode.transition][0]}` : `当前：${modeCopy[status.work_mode.mode][0]}`;
     if (status.work_mode.last_error) text += `\n提示：${status.work_mode.last_error}`;
     state.textContent = text;
+    renderLED(status.led || {});
+  }
+  function renderLED(led) {
+    const copy=document.querySelector('[data-led-state]'); const dot=document.querySelector('[data-led-dot]');
+    const enabled=document.querySelector('[data-led-enabled]'); const night=document.querySelector('[data-led-night]');
+    if (!copy || !dot || !enabled || !night) return;
+    const modeColor=led.mode_color_label || '读取中'; const actual=`${led.color_label || '未知'}${led.pattern_label || ''}`;
+    copy.textContent=`模式颜色：${modeColor} · 当前：${actual}\n${led.meaning || '正在读取状态灯含义…'}`;
+    dot.style.background=ledColors[led.color] || 'transparent';
+    dot.style.boxShadow=led.color==='off'?'none':`0 0 10px ${ledColors[led.color] || '#888'}`;
+    enabled.checked=led.enabled !== false; night.checked=led.night_mode === true;
+  }
+  async function setLED() {
+    const enabled=document.querySelector('[data-led-enabled]'); const night=document.querySelector('[data-led-night]');
+    if (!enabled || !night) return;
+    enabled.disabled=true; night.disabled=true;
+    try {
+      const led=await request('/wangka/api/led',{method:'POST',body:JSON.stringify({enabled:enabled.checked,night_mode:night.checked})});
+      renderLED(led); await refreshStatus();
+    } catch(error) { alert(error.message); await refreshStatus(); }
+    finally { enabled.disabled=false; night.disabled=false; }
   }
   async function refreshStatus() {
     if (!document.getElementById('wangka-work-mode-panel') && !document.getElementById('wangka-sms-hint')) return;
@@ -230,6 +256,9 @@ EXPERIENCE_SCRIPT = r"""
     const buttons = document.createElement('div'); buttons.className='wangka-mode-buttons';
     Object.entries(modeCopy).forEach(([mode, text]) => { const button=document.createElement('button'); button.className='wangka-mode-button'; button.dataset.workMode=mode; const strong=document.createElement('strong'); strong.textContent=text[0]; const span=document.createElement('span'); span.textContent=text[1]; button.append(strong,span); button.onclick=()=>switchMode(mode); buttons.appendChild(button); });
     const state = document.createElement('div'); state.className='wangka-mode-status'; state.dataset.modeState='1'; state.textContent='正在读取当前模式…'; panel.append(buttons,state);
+    const ledRow=document.createElement('div'); ledRow.className='wangka-led-row';
+    const ledState=document.createElement('div'); ledState.className='wangka-led-state'; const dot=document.createElement('span'); dot.className='wangka-led-dot'; dot.dataset.ledDot='1'; const ledCopy=document.createElement('div'); ledCopy.className='wangka-led-copy'; ledCopy.dataset.ledState='1'; ledCopy.textContent='正在读取状态灯…'; ledState.append(dot,ledCopy);
+    const controls=document.createElement('div'); controls.className='wangka-led-controls'; const enabledLabel=document.createElement('label'); const enabled=document.createElement('input'); enabled.type='checkbox'; enabled.dataset.ledEnabled='1'; enabled.onchange=setLED; enabledLabel.append(enabled,document.createTextNode('开启状态灯')); const nightLabel=document.createElement('label'); const night=document.createElement('input'); night.type='checkbox'; night.dataset.ledNight='1'; night.onchange=setLED; nightLabel.append(night,document.createTextNode('夜间模式')); controls.append(enabledLabel,nightLabel); ledRow.append(ledState,controls); panel.appendChild(ledRow);
     header.parentElement.insertBefore(panel, header.nextElementSibling);
     refreshStatus();
   }
@@ -420,6 +449,8 @@ def default_state() -> dict[str, Any]:
         "uplink_mode": "device-uplink",
         "work_mode": "dual",
         "access_mode": "login-required",
+        "led_enabled": True,
+        "led_night_mode": False,
     }
 
 
@@ -433,6 +464,10 @@ def load_state() -> dict[str, Any]:
             state["work_mode"] = "dual"
         if state.get("access_mode") not in ACCESS_MODES:
             state["access_mode"] = "login-required"
+        if not isinstance(state.get("led_enabled"), bool):
+            state["led_enabled"] = True
+        if not isinstance(state.get("led_night_mode"), bool):
+            state["led_night_mode"] = False
         return state
     except (OSError, ValueError):
         return default_state()
@@ -817,6 +852,99 @@ def thermal_status() -> dict[str, Any]:
     }
 
 
+def fallback_led_status(
+    state: dict[str, Any], work_mode: dict[str, Any], thermal: dict[str, Any]
+) -> dict[str, Any]:
+    mode = str(work_mode.get("transition") or work_mode.get("mode") or "dual")
+    if mode not in {"dual", "data", "sms"}:
+        mode = "dual"
+    colors = {"dual": ("white", "白色"), "data": ("green", "绿色"), "sms": ("blue", "蓝色")}
+    labels = {"dual": "双模式", "data": "网卡模式", "sms": "短信模式"}
+    mode_color, mode_color_label = colors[mode]
+    enabled = state.get("led_enabled") is not False
+    night_mode = state.get("led_night_mode") is True
+    color, color_label, pattern, pattern_label = mode_color, mode_color_label, "steady", "常亮"
+    meaning = f"{labels[mode]}运行正常"
+    source = "work-mode"
+    maximum = thermal.get("maximum_c")
+    if not enabled:
+        color, color_label, pattern, pattern_label = "off", "熄灭", "off", "熄灭"
+        meaning, source = "状态灯已关闭", "setting"
+    elif isinstance(maximum, (int, float)) and maximum >= THERMAL_CRITICAL_C:
+        color, color_label, pattern, pattern_label = "red", "红色", "fast-blink", "快闪"
+        meaning, source = f"严重过热（{maximum:.1f}°C），请停止使用并降温", "thermal-critical"
+    elif isinstance(maximum, (int, float)) and maximum >= THERMAL_WARNING_C:
+        color, color_label, pattern, pattern_label = "yellow", "黄色", "slow-blink", "慢闪"
+        meaning, source = f"温度警告（{maximum:.1f}°C）", "thermal-warning"
+    elif work_mode.get("transition"):
+        if night_mode:
+            color, color_label, pattern, pattern_label = "off", "熄灭", "off", "熄灭"
+            meaning, source = f"夜间模式：正在切换到{labels[mode]}，正常状态不亮灯", "night-transition"
+        else:
+            pattern, pattern_label = "slow-blink", "慢闪"
+            meaning, source = f"正在切换到{labels[mode]}", "transition"
+    elif night_mode:
+        color, color_label, pattern, pattern_label = "off", "熄灭", "off", "熄灭"
+        meaning, source = f"夜间模式：{labels[mode]}运行正常，仅异常时亮灯", "night-mode"
+    return {
+        "status": "pending",
+        "available": True,
+        "enabled": enabled,
+        "night_mode": night_mode,
+        "mode": mode,
+        "mode_label": labels[mode],
+        "mode_color": mode_color,
+        "mode_color_label": mode_color_label,
+        "color": color,
+        "color_label": color_label,
+        "pattern": pattern,
+        "pattern_label": pattern_label,
+        "meaning": meaning,
+        "source": source,
+    }
+
+
+def led_status(
+    state: dict[str, Any], work_mode: dict[str, Any], thermal: dict[str, Any]
+) -> dict[str, Any]:
+    fallback = fallback_led_status(state, work_mode, thermal)
+    try:
+        if LED_RUNTIME_FILE.stat().st_size > 16 * 1024:
+            return fallback
+        loaded = json.loads(LED_RUNTIME_FILE.read_text(encoding="utf-8"))
+        if not isinstance(loaded, dict):
+            return fallback
+        required = {"enabled", "night_mode", "mode_color", "color", "pattern", "meaning"}
+        if not required.issubset(loaded):
+            return fallback
+        if loaded.get("enabled") != fallback["enabled"] or loaded.get("night_mode") != fallback["night_mode"]:
+            return fallback
+        expected_mode = str(work_mode.get("transition") or work_mode.get("mode") or "dual")
+        if loaded.get("mode") != expected_mode:
+            return fallback
+        return loaded
+    except (OSError, ValueError):
+        return fallback
+
+
+def apply_led_settings(enabled: bool, night_mode: bool) -> dict[str, Any]:
+    update_state_fields(
+        {
+            "led_enabled": enabled,
+            "led_night_mode": night_mode,
+            "led_settings_changed_at": int(time.time()),
+        }
+    )
+    raw = run_command([LED_COMMAND, "apply"])
+    try:
+        payload = json.loads(raw)
+    except ValueError as exc:
+        raise RuntimeError("状态灯助手返回无效结果") from exc
+    if not isinstance(payload, dict) or payload.get("status") != "ok":
+        raise RuntimeError("状态灯暂不可用")
+    return payload
+
+
 def shadow_hash(username: str) -> str:
     with open("/etc/shadow", "r", encoding="utf-8") as shadow:
         for line in shadow:
@@ -1129,6 +1257,7 @@ class WangkaHandler(BaseHTTPRequestHandler):
                     "auth_required": state.get("access_mode") != "trusted-network",
                     "access_mode": state.get("access_mode", "login-required"),
                     "work_modes": ["dual", "data", "sms"],
+                    "led_control": True,
                     "keychain_used": False,
                 },
             )
@@ -1166,6 +1295,7 @@ class WangkaHandler(BaseHTTPRequestHandler):
             state = load_state()
             uplink = uplink_status()
             work_mode = work_mode_status()
+            thermal = thermal_status()
             ssid = hotspot_ssid()
             active = backend_reachable()
             self.send_json(
@@ -1180,7 +1310,8 @@ class WangkaHandler(BaseHTTPRequestHandler):
                     "host_uplink_installed": bool(uplink.get("installed")),
                     "uplink": uplink,
                     "work_mode": work_mode,
-                    "thermal": thermal_status(),
+                    "thermal": thermal,
+                    "led": led_status(state, work_mode, thermal),
                     "access_mode": state.get("access_mode", "login-required"),
                     "auth_required": state.get("access_mode") != "trusted-network",
                     "vohive_active": active,
@@ -1188,6 +1319,19 @@ class WangkaHandler(BaseHTTPRequestHandler):
                     **system_time_payload(),
                 },
             )
+            return
+        if path == "/wangka/api/led" and self.command == "POST":
+            try:
+                payload = self.read_json()
+                enabled = payload.get("enabled")
+                night_mode = payload.get("night_mode")
+                if not isinstance(enabled, bool) or not isinstance(night_mode, bool):
+                    raise ValueError("状态灯设置必须为布尔值")
+                self.send_json(200, apply_led_settings(enabled, night_mode))
+            except ValueError as exc:
+                self.send_json(400, {"status": "error", "message": str(exc)})
+            except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                self.send_json(500, {"status": "error", "message": str(exc)[:240]})
             return
         if path == "/wangka/api/work-mode" and self.command == "POST":
             try:

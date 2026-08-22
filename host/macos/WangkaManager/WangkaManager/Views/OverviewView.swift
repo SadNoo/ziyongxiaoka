@@ -100,6 +100,12 @@ struct OverviewView: View {
             metric("Wi‑Fi", appliance.wifiSSID, .indigo, "wifi")
             metric("网络方向", uplinkTitle(appliance.uplinkMode), .blue, "arrow.left.arrow.right")
             metric("蜂窝设备", deviceSummary, onlineDeviceCount > 0 ? .green : .secondary, "simcard.2")
+            metric(
+                "状态灯",
+                appliance.led?.currentAppearance ?? "读取中…",
+                ledColor(appliance.led?.color),
+                "lightbulb.fill"
+            )
             metric("系统时间", appliance.systemTime, .secondary, "clock")
         }
     }
@@ -110,6 +116,7 @@ struct OverviewView: View {
             metric("Wi‑Fi", "检测中…", .secondary, "wifi")
             metric("网络方向", "检测中…", .secondary, "arrow.left.arrow.right")
             metric("蜂窝设备", "检测中…", .secondary, "simcard.2")
+            metric("状态灯", "检测中…", .secondary, "lightbulb.fill")
             metric("系统时间", "读取中…", .secondary, "clock")
         }
         .allowsHitTesting(false)
@@ -182,6 +189,23 @@ struct OverviewView: View {
                 Label(appliance.workMode.lastError, systemImage: "exclamationmark.triangle")
                     .font(.caption).foregroundStyle(.orange)
             }
+            if let led = appliance.led {
+                Divider()
+                HStack(spacing: 10) {
+                    Circle()
+                        .fill(ledColor(led.color))
+                        .frame(width: 18, height: 18)
+                        .overlay(Circle().stroke(Color.secondary.opacity(0.45)))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("模式颜色：\(led.modeColorLabel) · 当前：\(led.currentAppearance)")
+                            .font(.subheadline.bold())
+                        Text(led.meaning)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+            }
         }
         .cardStyle()
     }
@@ -211,6 +235,20 @@ struct OverviewView: View {
         }
         .cardStyle()
         .allowsHitTesting(false)
+    }
+
+    private func ledColor(_ value: String?) -> Color {
+        switch value {
+        case "red": return .red
+        case "green": return .green
+        case "blue": return .blue
+        case "yellow": return .yellow
+        case "cyan": return .cyan
+        case "magenta": return .purple
+        case "white": return .white
+        case "off": return .clear
+        default: return .secondary
+        }
     }
 
     private var trafficCard: some View {

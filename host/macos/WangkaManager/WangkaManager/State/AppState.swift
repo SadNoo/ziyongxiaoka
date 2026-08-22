@@ -343,6 +343,26 @@ final class AppState: ObservableObject {
         }
     }
 
+    func updateLED(enabled: Bool, nightMode: Bool) async {
+        guard let client else { return }
+        isBusy = true
+        clearMessages()
+        defer { isBusy = false }
+        do {
+            _ = try await client.updateLED(enabled: enabled, nightMode: nightMode)
+            await refreshOverview(reportErrors: false)
+            if !enabled {
+                showNotice("状态灯已关闭")
+            } else if nightMode {
+                showNotice("夜间模式已开启，仅异常时亮灯")
+            } else {
+                showNotice("状态灯已恢复当前工作模式颜色")
+            }
+        } catch {
+            handle(error)
+        }
+    }
+
     func switchUplinkMode(_ mode: UplinkMode) async {
         guard let client else { return }
         isBusy = true
@@ -577,6 +597,7 @@ final class AppState: ObservableObject {
                 authRequired: response.authRequired,
                 accessMode: response.accessMode,
                 workModes: WorkMode.allCases,
+                ledControl: capabilities?.ledControl,
                 keychainUsed: false
             )
             if enabled {

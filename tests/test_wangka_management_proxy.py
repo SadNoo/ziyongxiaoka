@@ -185,6 +185,8 @@ class ManagementProxyTests(unittest.TestCase):
         self.assertIn(b"wangka-shell-script", result)
         self.assertIn(b"wangka-experience-script", result)
         self.assertIn("工作模式".encode(), result)
+        self.assertIn("开启状态灯".encode(), result)
+        self.assertIn("夜间模式".encode(), result)
         self.assertIn("+国家/地区码".encode(), result)
         self.assertNotIn(b"wangka-auth-bootstrap", result)
         self.assertIn("拒绝并卸载".encode(), result)
@@ -202,6 +204,38 @@ class ManagementProxyTests(unittest.TestCase):
         state = self.module.load_state()
         self.assertEqual(state["work_mode"], "dual")
         self.assertEqual(state["access_mode"], "login-required")
+        self.assertIs(state["led_enabled"], True)
+        self.assertIs(state["led_night_mode"], False)
+
+    def test_led_status_fallback_and_settings_are_bounded(self) -> None:
+        state = self.module.load_state()
+        work_mode = self.module.work_mode_status()
+        thermal = {
+            "status": "ok",
+            "maximum_c": 70.0,
+            "warning_c": 85.0,
+            "critical_c": 92.0,
+            "sensors": [],
+        }
+        with mock.patch.object(self.module, "LED_RUNTIME_FILE", Path("/missing-led-status")):
+            status = self.module.led_status(state, work_mode, thermal)
+        self.assertEqual(status["mode_color"], "white")
+        self.assertEqual(status["color"], "white")
+        self.assertEqual(status["pattern"], "steady")
+
+        completed = self.module.subprocess.CompletedProcess(
+            ["wangka-led", "apply"],
+            0,
+            '{"status":"ok","enabled":false,"night_mode":true,"mode":"dual",'
+            '"mode_color":"white","color":"off","pattern":"off","meaning":"状态灯已关闭"}',
+            "",
+        )
+        with mock.patch.object(self.module.subprocess, "run", return_value=completed):
+            applied = self.module.apply_led_settings(False, True)
+        self.assertIs(applied["enabled"], False)
+        saved = self.module.load_state()
+        self.assertIs(saved["led_enabled"], False)
+        self.assertIs(saved["led_night_mode"], True)
 
     def test_work_mode_switch_only_accepts_fixed_modes(self) -> None:
         with self.assertRaises(ValueError):

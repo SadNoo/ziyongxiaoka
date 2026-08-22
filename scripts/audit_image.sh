@@ -65,6 +65,7 @@ require_masked "${ROOT_MOUNT}/etc/systemd/system/ModemManager.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-network-ready.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-ssh-host-keys.service"
+require_link "${ROOT_MOUNT}/etc/systemd/system/multi-user.target.wants/wangka-led.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/sysinit.target.wants/wangka-timekeeper.service"
 require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-timekeeper.timer"
 require_link "${ROOT_MOUNT}/etc/systemd/system/timers.target.wants/wangka-uplink-reconcile.timer"
@@ -80,6 +81,8 @@ require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-modem"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-network-ready"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-uplink"
 require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-work-mode"
+require_file "${ROOT_MOUNT}/usr/local/sbin/wangka-led"
+require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-led.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-network-ready.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-ssh-host-keys.service"
 require_file "${ROOT_MOUNT}/etc/systemd/system/wangka-uplink-reconcile.service"
@@ -247,6 +250,12 @@ grep -Eq '"work_mode"[[:space:]]*:[[:space:]]*"dual"' \
 grep -Eq '"access_mode"[[:space:]]*:[[:space:]]*"login-required"' \
     "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
     || fail "factory login protection is not enabled"
+grep -Eq '"led_enabled"[[:space:]]*:[[:space:]]*true' \
+    "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
+    || fail "factory status LED is not enabled"
+grep -Eq '"led_night_mode"[[:space:]]*:[[:space:]]*false' \
+    "${ROOT_MOUNT}/var/lib/wangka-management/state.json" \
+    || fail "factory LED night mode is unexpectedly enabled"
 require_file "${ROOT_MOUNT}/var/lib/wangka-management/vohive-local-auth.json"
 [ "$(stat -c '%a' "${ROOT_MOUNT}/var/lib/wangka-management/vohive-local-auth.json")" = '600' ] \
     || fail "local VoHive credential store permissions are not 0600"

@@ -112,6 +112,7 @@ struct SettingsView: View {
 
                 networkDirectionCard
                 wifiCard
+                ledCard
                 notificationCard
 
                 VStack(alignment: .leading, spacing: 14) {
@@ -252,6 +253,59 @@ struct SettingsView: View {
             Button("管理通知集成") { showingNotificationSettings = true }
                 .buttonStyle(.borderedProminent)
                 .disabled(state.isBusy || state.isNotificationLoading || state.notificationSettings == nil)
+        }
+        .cardStyle()
+    }
+
+    private var ledCard: some View {
+        let led = state.appliance?.led
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 18) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("状态灯").font(.title2.bold())
+                    Text(led.map { "模式颜色：\($0.modeColorLabel) · 当前：\($0.currentAppearance)" } ?? "正在读取状态灯…")
+                        .foregroundStyle(.secondary)
+                    Text(led?.meaning ?? "双模式白色、网卡模式绿色、短信模式蓝色。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 10) {
+                    Toggle(
+                        "开启状态灯",
+                        isOn: Binding(
+                            get: { state.appliance?.led?.enabled ?? true },
+                            set: { enabled in
+                                Task {
+                                    await state.updateLED(
+                                        enabled: enabled,
+                                        nightMode: state.appliance?.led?.nightMode ?? false
+                                    )
+                                }
+                            }
+                        )
+                    )
+                    Toggle(
+                        "夜间模式",
+                        isOn: Binding(
+                            get: { state.appliance?.led?.nightMode ?? false },
+                            set: { nightMode in
+                                Task {
+                                    await state.updateLED(
+                                        enabled: state.appliance?.led?.enabled ?? true,
+                                        nightMode: nightMode
+                                    )
+                                }
+                            }
+                        )
+                    )
+                }
+                .toggleStyle(.switch)
+                .disabled(state.isBusy || led == nil)
+            }
+            Text("夜间模式会关闭正常运行和切换提示灯；温度、蜂窝与系统异常仍会亮灯告警。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .cardStyle()
     }

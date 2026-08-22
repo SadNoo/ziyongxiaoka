@@ -172,6 +172,22 @@ final class APIClient {
         )
     }
 
+    func updateLED(enabled: Bool, nightMode: Bool) async throws -> LEDStatus {
+        struct Body: Encodable {
+            let enabled: Bool
+            let nightMode: Bool
+
+            enum CodingKeys: String, CodingKey {
+                case enabled
+                case nightMode = "night_mode"
+            }
+        }
+        return try await post(
+            "/wangka/api/led",
+            body: Body(enabled: enabled, nightMode: nightMode)
+        )
+    }
+
     func setAccessMode(_ mode: String) async throws -> AccessModeResponse {
         struct Body: Encodable { let mode: String }
         return try await post("/wangka/api/access-mode", body: Body(mode: mode))

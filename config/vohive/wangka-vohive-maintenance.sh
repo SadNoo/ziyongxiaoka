@@ -44,16 +44,17 @@ case "$COMMAND" in
         fi
         if [ ! -f "$LIVE_CONFIG" ]; then
             install -m 0600 "$CANONICAL_CONFIG" "$LIVE_CONFIG"
-            printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
+            printf '%s\n' '{"access_mode":"login-required","generation":0,"initialized":false,"led_enabled":true,"led_night_mode":false,"uplink_mode":"device-uplink","work_mode":"dual"}' \
                 > /var/lib/wangka-management/state.json
             chmod 0600 /var/lib/wangka-management/state.json
         fi
         systemctl daemon-reload
-        systemctl enable wangka-timekeeper.service wangka-timekeeper.timer wangka-network-ready.service wangka-web-firewall.service wangka-web-proxy.socket vohive.service wangka-vohive-enroll.service
+        systemctl enable wangka-timekeeper.service wangka-timekeeper.timer wangka-network-ready.service wangka-web-firewall.service wangka-web-proxy.socket wangka-led.service vohive.service wangka-vohive-enroll.service
         systemctl start wangka-timekeeper.service wangka-timekeeper.timer
         systemctl restart wangka-network-ready.service
         systemctl restart wangka-web-firewall.service
         systemctl restart vohive.service
+        systemctl restart wangka-led.service
         systemctl restart wangka-web-proxy.socket
         # Modem enrollment may legitimately use its full 180-second timeout
         # when no SIM is installed.  Repair must return promptly while the
