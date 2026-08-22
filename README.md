@@ -13,8 +13,8 @@
 | --- | --- |
 | 当前项目源码 | `v1.0.1`，新增 RGB 状态灯控制与管理界面 |
 | WiSiM macOS App 源码 | `1.0.1`（构建号 7），Apple Silicon 与 Intel 通用 |
-| 当前公开刷机包 | `v1.0.0`，UFI103S-V03 单样机测试包 |
-| 当前 GitHub Release | `v1.0.0` Pre-release；旧资产保持冻结，不会被同名覆盖 |
+| 当前公开刷机包 | `v1.0.1`，UFI103S-V03 单样机测试包 |
+| 当前 GitHub Release | `v1.0.1` Pre-release；旧资产保持冻结，不会被同名覆盖 |
 
 > [!WARNING]
 > 刷机包目前只在一只样机上完成构建、回读和功能验证。没有更多样品前，它只应
@@ -56,15 +56,15 @@
 ## 下载
 
 从项目的 [GitHub Releases](https://github.com/SadNoo/ziyongxiaoka/releases)
-下载需要的文件。下表是当前已发布的 `v1.0.0` 冻结资产；`v1.0.1` 源码已经加入
-RGB 状态灯，新的 App 与刷机包必须重新构建、校验后才会作为新资产发布：
+下载需要的文件。`v1.0.1` 加入 RGB 状态灯，App 与刷机包均为重新构建和校验的
+新资产；旧版本文件不会被同名覆盖：
 
 | 文件 | 用途 |
 | --- | --- |
-| `WiSiM-1.0.0-macos-universal.zip` | Apple Silicon 与 Intel Mac 日常管理 App |
-| `WiSiM-1.0.0-macos-universal.zip.sha256` | WiSiM 单独校验文件 |
-| `ziyongxiaoka-UFI103S-V03-v1.0.0.tar.gz` | 刷机、恢复、EDL 源码/锁文件、Debian 镜像和固定底层文件 |
-| `ziyongxiaoka-UFI103S-V03-v1.0.0.tar.gz.sha256` | 刷机包单独校验文件 |
+| `WiSiM-1.0.1-macos-universal.zip` | Apple Silicon 与 Intel Mac 日常管理 App |
+| `WiSiM-1.0.1-macos-universal.zip.sha256` | WiSiM 单独校验文件 |
+| `ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz` | 刷机、恢复、EDL 源码/锁文件、Debian 镜像和固定底层文件 |
+| `ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz.sha256` | 刷机包单独校验文件 |
 | `SHA256SUMS` | 全部发布资产的汇总校验文件 |
 
 不要从网盘、聊天群或不明镜像下载改名后的刷机包。校验不一致时不要解压，
@@ -103,10 +103,10 @@ sudo apt install -y libusb-1.0-0 python3 python3-venv
 把刷机包和同名 `.sha256` 放在同一目录：
 
 ```sh
-shasum -a 256 -c ziyongxiaoka-UFI103S-V03-v1.0.0.tar.gz.sha256
-mkdir ziyongxiaoka-v1.0.0
-tar -xzf ziyongxiaoka-UFI103S-V03-v1.0.0.tar.gz -C ziyongxiaoka-v1.0.0
-cd ziyongxiaoka-v1.0.0
+shasum -a 256 -c ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz.sha256
+mkdir ziyongxiaoka-v1.0.1
+tar -xzf ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz -C ziyongxiaoka-v1.0.1
+cd ziyongxiaoka-v1.0.1
 ```
 
 Linux 也可以使用 `sha256sum -c`。只有显示 `OK` 才能继续。
@@ -303,8 +303,8 @@ Apple Silicon 和 Intel Mac。它可以：
 - 修改 Wi-Fi 名称、密码与网络方向
 - 配置设备网页已有的通知集成
 
-已经发布的 `1.0.0` 冻结资产不会被同名覆盖；`1.0.1` 正式资产需要重新生成安装包
-和 SHA-256 后另行发布。
+`1.0.1` 使用新的安装包和 SHA-256；已经发布的 `1.0.0` 冻结资产仍保留，不会被
+同名覆盖。
 
 WiSiM 不负责刷机，也不保存密码或令牌到 Keychain/UserDefaults。设备开启登录
 保护时，每次退出 App 后都需要重新登录。
@@ -312,11 +312,11 @@ WiSiM 不负责刷机，也不保存密码或令牌到 Keychain/UserDefaults。�
 下载安装：
 
 ```sh
-shasum -a 256 -c WiSiM-1.0.0-macos-universal.zip.sha256
-unzip WiSiM-1.0.0-macos-universal.zip
+shasum -a 256 -c WiSiM-1.0.1-macos-universal.zip.sha256
+unzip WiSiM-1.0.1-macos-universal.zip
 ```
 
-把 `WiSiM-1.0.0.app` 移到“应用程序”。当前公开包未做 Apple Developer ID 公证，
+把 `WiSiM-1.0.1.app` 移到“应用程序”。当前公开包未做 Apple Developer ID 公证，
 首次启动如被 Gatekeeper 拦截，请在 Finder 中右键 App 并选择“打开”，确认下载来源
 和 SHA-256 后再继续。
 
