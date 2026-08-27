@@ -5,6 +5,7 @@ import SwiftUI
 
 struct OverviewView: View {
     @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var dji: DJIModemService
     @State private var pendingMode: WorkMode?
     @State private var pendingDeviceAction: DeviceAction?
 
@@ -14,20 +15,20 @@ struct OverviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
+                detectedDevicesCard
 
                 if let appliance = state.appliance {
                     statusGrid(appliance)
                     workModeCard(appliance)
+                    trafficCard
+                    thermalCard(appliance.thermal)
+                } else if let snapshot = dji.snapshot {
+                    djiStatusGrid(snapshot)
+                    ufiUnavailableCard
                 } else {
                     statusPlaceholderGrid
                     workModePlaceholder
-                }
-
-                trafficCard
-
-                if let appliance = state.appliance {
-                    thermalCard(appliance.thermal)
-                } else {
+                    trafficCard
                     thermalPlaceholder
                 }
 
@@ -83,15 +84,136 @@ struct OverviewView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button { Task { await state.refreshOverview() } } label: {
-                if state.isOverviewLoading {
+            Button {
+                Task {
+                    async let ufiRefresh: Void = state.refreshOverview()
+                    async let djiRefresh: Void = dji.refresh()
+                    _ = await (ufiRefresh, djiRefresh)
+                }
+            } label: {
+                if state.isOverviewLoading || dji.isRefreshing {
                     ProgressView().controlSize(.small)
                 } else {
                     Label("刷新", systemImage: "arrow.clockwise")
                 }
             }
-            .disabled(state.isBusy)
+            .disabled(state.isBusy || dji.isPerformingDeviceAction)
         }
+    }
+
+    private var detectedDevicesCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("已识别设备").font(.title2.bold())
+                Spacer()
+                Text("\(connectedDeviceFamilies) 类已连接")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(connectedDeviceFamilies > 0 ? .green : .secondary)
+            }
+            HStack(spacing: 12) {
+                devicePresence(
+                    title: "UFI103S",
+                    detail: ufiPresenceDetail,
+                    connected: isUFIConnected,
+                    symbol: "wifi.router"
+                )
+                devicePresence(
+                    title: dji.snapshot.map { "大疆 \($0.device.model)" } ?? "大疆 QDC507",
+                    detail: djiPresenceDetail,
+                    connected: dji.isDetected,
+                    symbol: "antenna.radiowaves.left.and.right"
+                )
+            }
+        }
+        .cardStyle()
+    }
+
+    private var connectedDeviceFamilies: Int {
+        (isUFIConnected ? 1 : 0) + (dji.isDetected ? 1 : 0)
+    }
+
+    private var isUFIConnected: Bool {
+        switch state.phase {
+        case .connected, .loginRequired: return true
+        default: return false
+        }
+    }
+
+    private var ufiPresenceDetail: String {
+        if let endpoint = state.endpoint?.host { return "已连接·\(endpoint)" }
+        switch state.phase {
+        case .discovering: return "正在查找 USB / Wi‑Fi 管理端"
+        default: return "未连接，不影响单独管理大疆设备"
+        }
+    }
+
+    private var djiPresenceDetail: String {
+        if let snapshot = dji.snapshot {
+            return "USB \(snapshot.device.usbID)·SIM \(snapshot.sim.label)"
+        }
+        if dji.isRefreshing || !dji.hasCompletedInitialDetection { return "正在检查 USB…" }
+        return "未检测到支持的 USB 设备"
+    }
+
+    private func devicePresence(
+        title: String,
+        detail: String,
+        connected: Bool,
+        symbol: String
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.title2)
+                .foregroundStyle(connected ? Color.green : Color.secondary)
+                .frame(width: 34)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 7) {
+                    Circle().fill(connected ? Color.green : Color.secondary).frame(width: 8, height: 8)
+                    Text(title).font(.headline)
+                }
+                Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+        .padding(12)
+        .background((connected ? Color.green : Color.secondary).opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func djiStatusGrid(_ snapshot: DJIModemSnapshot) -> some View {
+        LazyVGrid(columns: adaptiveColumns, spacing: 14) {
+            metric("大疆设备", "\(snapshot.device.model) 已连接", .green, "antenna.radiowaves.left.and.right")
+            metric("SIM", snapshot.sim.label, snapshot.sim.state == "ready" ? .green : .orange, "simcard")
+            metric("驻网", snapshot.network.registrationLabel, djiNetworkColor(snapshot.network.registration), "network")
+            metric("信号", snapshot.network.signalDBM.map { "\($0) dBm" } ?? "暂无读数", .indigo, "cellularbars")
+            metric("ADB / USB 音频", snapshot.voice.adbEnabled && snapshot.voice.uacEnabled ? "已启用" : "待初始化", snapshot.voice.adbEnabled && snapshot.voice.uacEnabled ? .green : .orange, "cable.connector")
+            metric("通话能力", dji.voiceAvailability.title, dji.voiceAvailability == .ready ? .green : .orange, "phone")
+        }
+    }
+
+    private func djiNetworkColor(_ registration: String) -> Color {
+        switch registration {
+        case "registered", "roaming": return .green
+        case "searching": return .orange
+        default: return .secondary
+        }
+    }
+
+    private var ufiUnavailableCard: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.title2)
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("UFI 管理端未连接").font(.headline)
+                Text("上方大疆设备已正常识别。UFI 的工作模式、流量、温度与 VoHive 状态会在它连接后显示。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .cardStyle()
     }
 
     private func statusGrid(_ appliance: ApplianceStatus) -> some View {
@@ -397,18 +519,61 @@ struct OverviewView: View {
                 }
             }
 
-            if state.managedDevices.isEmpty {
+            if let snapshot = dji.snapshot {
+                djiManagedDeviceCard(snapshot)
+            }
+
+            if state.managedDevices.isEmpty && dji.snapshot == nil {
                 Text("暂未读取到受管蜂窝设备。")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 86, alignment: .center)
                     .cardStyle()
-            } else {
+            } else if !state.managedDevices.isEmpty {
                 LazyVGrid(columns: adaptiveColumns, spacing: 14) {
                     ForEach(state.managedDevices) { device in managedDeviceCard(device) }
                 }
                 selectedDevicePanel
             }
         }
+    }
+
+    private func djiManagedDeviceCard(_ snapshot: DJIModemSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Circle().fill(Color.green).frame(width: 10, height: 10)
+                Text("大疆 \(snapshot.device.model)").font(.title3.bold())
+                Text("USB \(snapshot.device.usbID)")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Label("已连接", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            LazyVGrid(columns: adaptiveColumns, spacing: 10) {
+                compactDetail("固件", snapshot.device.firmware.nilIfEmpty ?? "未读取")
+                compactDetail("SIM", snapshot.sim.label)
+                compactDetail("驻网", snapshot.network.registrationLabel)
+                compactDetail("信号", snapshot.network.signalDBM.map { "\($0) dBm" } ?? "—")
+                compactDetail("ADB / UAC", snapshot.voice.adbEnabled && snapshot.voice.uacEnabled ? "已启用" : "待初始化")
+                compactDetail("VoLTE 能力", snapshot.voice.volteCapability.map { String($0) } ?? "未知")
+            }
+            Text("更完整的 IMS、VoLTE、USB 音频、初始化与回滚状态请在左侧“通话”页查看。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .cardStyle()
+    }
+
+    private func compactDetail(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).fontWeight(.semibold).lineLimit(1)
+        }
+        .font(.caption)
+        .padding(10)
+        .background(Color.primary.opacity(0.025))
+        .clipShape(RoundedRectangle(cornerRadius: 9))
     }
 
     private func managedDeviceCard(_ device: ManagedDevice) -> some View {

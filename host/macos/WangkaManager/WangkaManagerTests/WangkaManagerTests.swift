@@ -6,6 +6,19 @@ final class WangkaManagerTests: XCTestCase {
         super.tearDown()
     }
 
+    func testDJIModemSnapshotDecodesTruthfulSetupState() throws {
+        let data = #"{"status":"ok","version":"0.2.0","device":{"id":"dji-qdc507","family":"dji-qdc507","vendor":"BAIWANG","model":"QDC507","firmware":"QDC507GLEFM21","usb_id":"2ca3:4006","imei_suffix":"0000"},"sim":{"state":"absent"},"network":{"registration":"searching","signal_dbm":-75},"voice":{"hardware_supported":true,"control_available":true,"adb_enabled":false,"uac_enabled":false,"ims_enabled":false,"volte_capability":0,"volte_enabled":true,"availability":"unsupported","reason":"模块报告 VoLTE capability=0"},"initialization":{"adb_uac_initialized":false,"backup_available":false,"backup_count":0,"can_initialize":true,"can_restore":false,"state":"ready_to_initialize","reason":"可先创建备份"},"call":{"state":"idle","incoming":false,"active":false}}"#.data(using: .utf8)!
+        let snapshot = try JSONDecoder().decode(DJIModemSnapshot.self, from: data)
+        XCTAssertEqual(snapshot.device.model, "QDC507")
+        XCTAssertEqual(snapshot.sim.state, "absent")
+        XCTAssertFalse(snapshot.voice.uacEnabled)
+        XCTAssertEqual(snapshot.voice.volteCapability, 0)
+        XCTAssertEqual(snapshot.voice.availability, "unsupported")
+        XCTAssertEqual(snapshot.initialization?.state, "ready_to_initialize")
+        XCTAssertTrue(snapshot.initialization?.canInitialize == true)
+        XCTAssertTrue(snapshot.call.isIdle)
+    }
+
     func testEndpointNormalizationUsesHTTPAndRemovesTrailingSlash() throws {
         XCTAssertEqual(
             try ManagementEndpoint.normalize(" 192.168.5.1/ ").absoluteString,

@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct WangkaManagerApp: App {
     @StateObject private var state = AppState()
+    @StateObject private var dji = DJIModemService()
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(state)
+                .environmentObject(dji)
                 .frame(minWidth: 900, minHeight: 640)
         }
         .windowStyle(.titleBar)
