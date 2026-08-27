@@ -11,6 +11,7 @@
 		348B4E9D04DBC917917D71D3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2397EC56A2F11121D9EC38C5 /* RootView.swift */; };
 		3823370D2D7509908AC1CDB2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDA2C7B869716FEC2EB9381 /* AppState.swift */; };
 		3962BF931FEF51C45B4C7B40 /* WangkaManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A650A6DF19D2724977F4E61 /* WangkaManagerTests.swift */; };
+		49262B2783F6C4D8D81C1B5B /* DJIModemModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F25AE2DF5EE94A46CDF597 /* DJIModemModels.swift */; };
 		5515DEEDA58A074E0FF030C0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABF5628188BCFCBF82208498 /* Assets.xcassets */; };
 		5928CB0164DD83072D0A402E /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E07B6A6AA410B587D435B9 /* APIModels.swift */; };
 		62200DC441FB1D62D45C06A4 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624B4EA02CA72572112AF1F2 /* APIClient.swift */; };
@@ -18,22 +19,28 @@
 		7409E7B48E8FCF818BB62685 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FFAC2798925641DD8AA38A /* OverviewView.swift */; };
 		97D88B5FCCE422E38531EE01 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624B4EA02CA72572112AF1F2 /* APIClient.swift */; };
 		AD09FB81B4336B1B7152EFA8 /* WangkaManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1C4909417507D783871A99 /* WangkaManagerApp.swift */; };
+		AE467710D481EFC4F07F4E76 /* DJIModemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1D3875235D757E4E5E8259 /* DJIModemService.swift */; };
+		B3A66F6902C243DEF2032792 /* CallsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 905B66B4B1CE0BFC6E8ECAFA /* CallsView.swift */; };
 		B90C59072640BBD0FA6A279A /* LogsSettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */; };
 		D25DE336361A49012B2764E6 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E07B6A6AA410B587D435B9 /* APIModels.swift */; };
+		EBB52EAC632F776305AC6D88 /* DJIModemModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F25AE2DF5EE94A46CDF597 /* DJIModemModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2397EC56A2F11121D9EC38C5 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		2DDA2C7B869716FEC2EB9381 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		41FFAC2798925641DD8AA38A /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		4A1D3875235D757E4E5E8259 /* DJIModemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DJIModemService.swift; sourceTree = "<group>"; };
 		624B4EA02CA72572112AF1F2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		6A650A6DF19D2724977F4E61 /* WangkaManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WangkaManagerTests.swift; sourceTree = "<group>"; };
 		78A32A1BE3EDD7834700FAA4 /* WangkaManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WangkaManager.entitlements; sourceTree = "<group>"; };
 		87053036FB17A65E19081036 /* WangkaManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WangkaManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EA209B59F6B55BBCBD4817A /* SMSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMSView.swift; sourceTree = "<group>"; };
+		905B66B4B1CE0BFC6E8ECAFA /* CallsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallsView.swift; sourceTree = "<group>"; };
 		9A1C4909417507D783871A99 /* WangkaManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WangkaManagerApp.swift; sourceTree = "<group>"; };
 		ABF5628188BCFCBF82208498 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B2927D23D75702B7D1D44A98 /* WangkaManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WangkaManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4F25AE2DF5EE94A46CDF597 /* DJIModemModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DJIModemModels.swift; sourceTree = "<group>"; };
 		E5E07B6A6AA410B587D435B9 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		EE86B0C34CDC55CD8EA7E1A8 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogsSettingsViews.swift; sourceTree = "<group>"; };
@@ -60,6 +67,7 @@
 		4A3FCAA59F6001D178577433 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				905B66B4B1CE0BFC6E8ECAFA /* CallsView.swift */,
 				EF26669098F726DDE6A94B14 /* LogsSettingsViews.swift */,
 				41FFAC2798925641DD8AA38A /* OverviewView.swift */,
 				2397EC56A2F11121D9EC38C5 /* RootView.swift */,
@@ -72,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				E5E07B6A6AA410B587D435B9 /* APIModels.swift */,
+				B4F25AE2DF5EE94A46CDF597 /* DJIModemModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -102,6 +111,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C4C909C22B435A4E31858AF9 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4A1D3875235D757E4E5E8259 /* DJIModemService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		E0089C4E9839B6BC5004B791 /* WangkaManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -111,6 +128,7 @@
 				9031C4840C6EE37A0D2E7F13 /* App */,
 				4E634EA7135A00AADC1310E4 /* Models */,
 				3E96A3FCC3FF1559A15F0123 /* Networking */,
+				C4C909C22B435A4E31858AF9 /* Services */,
 				0705A814AD05C848CD241D2C /* State */,
 				4A3FCAA59F6001D178577433 /* Views */,
 			);
@@ -151,6 +169,7 @@
 			buildConfigurationList = E31BDB05C3D07629D04877B6 /* Build configuration list for PBXNativeTarget "WangkaManager" */;
 			buildPhases = (
 				8FA314213F093661D41A7FEA /* Sources */,
+				0D6D55099C4E1C3D5207B837 /* Build WiSiM device bridge */,
 				68C6DB5D38302C2113B3D3FC /* Resources */,
 			);
 			buildRules = (
@@ -212,6 +231,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0D6D55099C4E1C3D5207B837 /* Build WiSiM device bridge */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build WiSiM device bridge";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\nBRIDGE_SOURCE=\"${PROJECT_DIR}/../WiSiMBridge\"\nBRIDGE_OUTPUT=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/bridge\"\n\"${BRIDGE_SOURCE}/scripts/build-universal.sh\" \"${BRIDGE_OUTPUT}\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		203EA1CDC49CB4AB00516624 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -219,6 +260,7 @@
 			files = (
 				62200DC441FB1D62D45C06A4 /* APIClient.swift in Sources */,
 				5928CB0164DD83072D0A402E /* APIModels.swift in Sources */,
+				EBB52EAC632F776305AC6D88 /* DJIModemModels.swift in Sources */,
 				1E706D97727813F530B2E274 /* MockURLProtocol.swift in Sources */,
 				3962BF931FEF51C45B4C7B40 /* WangkaManagerTests.swift in Sources */,
 			);
@@ -231,6 +273,9 @@
 				97D88B5FCCE422E38531EE01 /* APIClient.swift in Sources */,
 				D25DE336361A49012B2764E6 /* APIModels.swift in Sources */,
 				3823370D2D7509908AC1CDB2 /* AppState.swift in Sources */,
+				B3A66F6902C243DEF2032792 /* CallsView.swift in Sources */,
+				49262B2783F6C4D8D81C1B5B /* DJIModemModels.swift in Sources */,
+				AE467710D481EFC4F07F4E76 /* DJIModemService.swift in Sources */,
 				B90C59072640BBD0FA6A279A /* LogsSettingsViews.swift in Sources */,
 				7409E7B48E8FCF818BB62685 /* OverviewView.swift in Sources */,
 				348B4E9D04DBC917917D71D3 /* RootView.swift in Sources */,
@@ -247,6 +292,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -262,6 +308,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -278,14 +325,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = WangkaManager/WangkaManager.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = WangkaManager/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = WiSiM;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager;
 				PRODUCT_NAME = WiSiM;
 				SDKROOT = macosx;
@@ -355,14 +403,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = WangkaManager/WangkaManager.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = WangkaManager/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = WiSiM;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.wangka.manager;
 				PRODUCT_NAME = WiSiM;
 				SDKROOT = macosx;

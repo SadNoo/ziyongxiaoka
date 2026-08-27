@@ -1,0 +1,68 @@
+name: WiSiM
+options:
+  minimumXcodeGenVersion: 2.46.0
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  WiSiM:
+    type: application
+    platform: iOS
+    sources:
+      - path: WiSiM
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.wangka.wisim.ios
+        PRODUCT_NAME: WiSiM
+        MARKETING_VERSION: 0.2.0
+        CURRENT_PROJECT_VERSION: 2
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: WiSiM/Info.plist
+      properties:
+        CFBundleDisplayName: WiSiM
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        NSLocalNetworkUsageDescription: 用于发现并连接 WiSiM 支持的本地设备，在局域网内管理设备和短信。
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+  WiSiMTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: WiSiMTests
+      - path: WiSiM/Models
+      - path: WiSiM/Networking
+    dependencies:
+      - target: WiSiM
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.wangka.wisim.ios.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  WiSiM:
+    build:
+      targets:
+        WiSiM: all
+        WiSiMTests: [test]
+    test:
+      targets:
+        - WiSiMTests

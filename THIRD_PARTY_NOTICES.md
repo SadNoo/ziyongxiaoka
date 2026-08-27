@@ -120,6 +120,31 @@ whose build script compiles libusbgx as a shared library and links `gt`
 against it. Equivalent source access is provided by the exact revision links
 above.
 
+## libusb (WiSiM macOS bridge)
+
+- Distributed path: `WiSiM.app/Contents/Resources/bridge/libusb-1.0.0.dylib`
+- Upstream: <https://github.com/libusb/libusb/releases/tag/v1.0.30>
+- Source version: 1.0.30
+- Source archive SHA-256: `fea36f34f9156400209595e300840767ab1a385ede1dc7ee893015aea9c6dbaf`
+- License: GNU Lesser General Public License 2.1 or later
+- License text: `LICENSES/LGPL-2.1-or-later.txt`
+
+The macOS build script downloads the fixed source archive, verifies its hash,
+and builds the bundled universal library for macOS 13 or later. WiSiM uses it
+only to communicate with supported modem USB interfaces.
+
+## QDC507 QADBKEY interoperability reference
+
+- Reference project: <https://github.com/carp4/qadbkey-unlock>
+- Reference revision: [`cab52a0a7429c8d8b8f31da8894c8c93155c0fc5`](https://github.com/carp4/qadbkey-unlock/tree/cab52a0a7429c8d8b8f31da8894c8c93155c0fc5)
+- License of the reference project: GNU General Public License 3.0
+
+WiSiM independently implements the public QDC507 challenge-response
+interoperability procedure in Go. It does not bundle or execute the upstream
+shell script, and the temporary response is derived in memory and is not
+logged or stored. The reference project remains governed by its own license
+and copyright notices.
+
 ## No third-party relicensing
 
 Names, logos, firmware, hardware designs, and other third-party material are

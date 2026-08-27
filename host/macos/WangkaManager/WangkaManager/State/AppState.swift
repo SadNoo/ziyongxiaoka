@@ -105,7 +105,7 @@ final class AppState: ObservableObject {
             try? await Task.sleep(nanoseconds: 750_000_000)
         }
         if Task.isCancelled { return }
-        phase = .failed("没有找到设备。请确认 USB 或设备 Wi‑Fi 已连接，也可以手动填写管理地址。")
+        phase = .failed("没有找到 UFI 管理端。请确认 UFI USB 或设备 Wi‑Fi 已连接，也可以手动填写管理地址。")
     }
 
     func connect(to rawEndpoint: String) async {

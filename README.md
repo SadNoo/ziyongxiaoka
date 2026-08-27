@@ -11,16 +11,17 @@
 
 | 组件 | 版本与状态 |
 | --- | --- |
-| 当前项目源码 | `v1.0.1`，新增 RGB 状态灯控制与管理界面 |
-| WiSiM macOS App 源码 | `1.0.1`（构建号 7），Apple Silicon 与 Intel 通用 |
+| 当前项目源码 | `v1.1.0`，新增 WiSiM 多设备识别与 iOS/iPadOS 客户端源码 |
+| WiSiM macOS App 源码 | `1.1.0`（构建号 9），Apple Silicon 与 Intel 通用 |
+| WiSiM iOS/iPadOS 源码 | `0.2.0`（构建号 2），最低 iOS 17，需使用者自行签名 |
 | 当前公开刷机包 | `v1.0.1`，UFI103S-V03 单样机测试包 |
-| 当前 GitHub Release | `v1.0.1` Pre-release；旧资产保持冻结，不会被同名覆盖 |
+| 当前 GitHub Release | `v1.1.0` Pre-release；刷机资产继续使用已冻结的 `v1.0.1` |
 
 > [!WARNING]
 > 刷机包目前只在一只样机上完成构建、回读和功能验证。没有更多样品前，它只应
 > 作为 UFI103S-V03 测试包使用，不代表不同卖家、批次或相似外壳都兼容。
 
-## 支持的硬件
+## 支持的刷机硬件
 
 目前只支持同时满足以下条件的设备：
 
@@ -35,6 +36,12 @@
 外壳、商品名称和网页界面相同，并不代表内部硬件相同。主板丝印或容量不一致时
 请立即停止，不要修改脚本绕过门禁。
 
+WiSiM 管理 App 的设备支持范围比刷机脚本更宽：macOS 版可同时识别 UFI103S
+和大疆 QDC507。QDC507 只通过 USB 读取状态、SIM、注册、信号、ADB/UAC 与
+VoLTE 能力，并提供先备份再初始化和回滚入口；它不属于本项目的一键刷机范围。
+iOS/iPadOS 版可直接管理 UFI；受 Apple USB 接口限制，QDC507 需要 Mac WiSiM
+中继，App 会明确显示这一状态，不会把无法确认的模块伪报为在线。
+
 ## 功能
 
 | 领域 | 当前提供的能力 |
@@ -46,7 +53,8 @@
 | 工作模式 | 双模式、网卡模式、短信模式，可按使用场景切换 |
 | RGB 状态灯 | 白/绿/蓝显示当前工作模式，异常与高温告警，可关闭或启用夜间模式 |
 | 系统管理 | SSH/Wi-Fi/VoHive 改密、可选网页登录保护、时间校准、误卸载保护 |
-| macOS | WiSiM 查看状态、温度、模式、状态灯、短信和日志，修改 Wi-Fi 与网络方向 |
+| macOS | WiSiM 聚合 UFI/QDC507；管理 UFI 状态、短信和设置，并只读检测 QDC507 能力 |
+| iOS/iPadOS | 原生 UFI 管理与短信；聚合显示 QDC507 的 Mac 中继要求 |
 | 刷机安全 | 双全盘备份、板型/容量/GPT 门禁、固定文件哈希、关键分区保护、刷后回读 |
 | 原厂恢复 | 使用该物理设备自己的完整备份恢复原系统 |
 
@@ -56,16 +64,18 @@
 ## 下载
 
 从项目的 [GitHub Releases](https://github.com/SadNoo/ziyongxiaoka/releases)
-下载需要的文件。`v1.0.1` 加入 RGB 状态灯，App 与刷机包均为重新构建和校验的
-新资产；旧版本文件不会被同名覆盖：
+下载需要的文件。`v1.1.0` 发布 WiSiM 多设备版和 iOS/iPadOS 源码包；UFI
+刷机包仍使用经过当前样机验证的 `v1.0.1`，旧版本文件不会被同名覆盖：
 
 | 文件 | 用途 |
 | --- | --- |
-| `WiSiM-1.0.1-macos-universal.zip` | Apple Silicon 与 Intel Mac 日常管理 App |
-| `WiSiM-1.0.1-macos-universal.zip.sha256` | WiSiM 单独校验文件 |
+| `WiSiM-1.1.0-macOS-universal.zip` | Apple Silicon 与 Intel Mac 多设备管理 App |
+| `WiSiM-1.1.0-macOS-universal.zip.sha256` | macOS App 单独校验文件 |
+| `WiSiM-iOS-0.2.0-source.zip` | iPhone/iPad 原生客户端源码；需使用者自己的开发者身份签名 |
+| `WiSiM-iOS-0.2.0-source.zip.sha256` | iOS/iPadOS 源码包单独校验文件 |
 | `ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz` | 刷机、恢复、EDL 源码/锁文件、Debian 镜像和固定底层文件 |
 | `ziyongxiaoka-UFI103S-V03-v1.0.1.tar.gz.sha256` | 刷机包单独校验文件 |
-| `SHA256SUMS` | 全部发布资产的汇总校验文件 |
+| `SHA256SUMS` | 对应 Release 中全部新资产的汇总校验文件 |
 
 不要从网盘、聊天群或不明镜像下载改名后的刷机包。校验不一致时不要解压，
 更不要连接设备执行刷写。
@@ -289,10 +299,9 @@ VoHive 和 WiSiM 都会显示“模式颜色”“当前实际灯光”和对应
 不要解除 `ModemManager.service` 的屏蔽，也不要在 VoHive 运行时直接用 `qmicli`
 访问同一 QMI 设备，否则可能重新引入双控制器冲突。
 
-## WiSiM for macOS
+## WiSiM for macOS、iPhone 与 iPad
 
-WiSiM `1.0.1` 基于首个通过当前样机实机验收的 `1.0.0` 日常管理版，支持
-Apple Silicon 和 Intel Mac。它可以：
+WiSiM macOS `1.1.0` 支持 Apple Silicon 和 Intel Mac。它可以：
 
 - 自动尝试 USB `192.168.5.1` 和 Wi-Fi `192.168.4.1`
 - 查看设备、温度、蜂窝状态和工作模式
@@ -302,9 +311,12 @@ Apple Silicon 和 Intel Mac。它可以：
 - 查看最新日志
 - 修改 Wi-Fi 名称、密码与网络方向
 - 配置设备网页已有的通知集成
+- 即使 UFI 不在线，也能独立识别大疆 QDC507
+- 显示 QDC507 的 SIM、注册、信号、ADB/UAC、IMS 与 VoLTE 能力
+- 在设备写入前创建本机备份，并提供 USB 配置恢复入口
 
-`1.0.1` 使用新的安装包和 SHA-256；已经发布的 `1.0.0` 冻结资产仍保留，不会被
-同名覆盖。
+QDC507 的本机备份保存在 WiSiM 的 App 数据目录，不进入项目、不上传 GitHub，
+发布包也不包含任何样机 IMEI、ICCID、配置备份或 SIM 信息。
 
 WiSiM 不负责刷机，也不保存密码或令牌到 Keychain/UserDefaults。设备开启登录
 保护时，每次退出 App 后都需要重新登录。
@@ -312,13 +324,18 @@ WiSiM 不负责刷机，也不保存密码或令牌到 Keychain/UserDefaults。�
 下载安装：
 
 ```sh
-shasum -a 256 -c WiSiM-1.0.1-macos-universal.zip.sha256
-unzip WiSiM-1.0.1-macos-universal.zip
+shasum -a 256 -c WiSiM-1.1.0-macOS-universal.zip.sha256
+unzip WiSiM-1.1.0-macOS-universal.zip
 ```
 
-把 `WiSiM-1.0.1.app` 移到“应用程序”。当前公开包未做 Apple Developer ID 公证，
+把 `WiSiM.app` 移到“应用程序”。当前公开包未做 Apple Developer ID 公证，
 首次启动如被 Gatekeeper 拦截，请在 Finder 中右键 App 并选择“打开”，确认下载来源
 和 SHA-256 后再继续。
+
+iOS/iPadOS `0.2.0` 最低支持 iOS 17，提供 UFI 状态、模式、温度、SIM、短信、
+删除与前台通知。源码包不含证书、描述文件、设备 UDID 或账号；在 Xcode 中选择
+自己的 Team 后才能安装到真机。QDC507 的 USB AT 与 USB 音频不能由 iOS App
+直接访问，因此当前明确显示“需要 Mac 中继”，不提供虚假的直连或拨号状态。
 
 ## 当前验证范围
 
@@ -330,18 +347,22 @@ unzip WiSiM-1.0.1-macos-universal.zip
 - 带国际区号的普通短信、中文长短信和重启恢复
 - 双模式、网卡模式、短信模式的空载长时切换
 - 当前源码的 RGB 状态灯三路颜色、混色、关闭与夜间模式控制
-- WiSiM 1.0.1 日常管理功能（含状态灯显示与设置）
+- WiSiM 1.1.0 UFI 日常管理功能（含状态灯显示与设置）
+- WiSiM 1.1.0 对 QDC507 的 USB 识别和只读能力检测
+- WiSiM iOS/iPadOS 0.2.0 Release 与测试目标编译
 
 仍待更多样品或后续版本验证：
 
 - 不同卖家/生产批次的 3/5/10 台兼容性
 - 持续热点大流量、弱信号和高温边界
 - Windows/Linux 主机兼容
-- 图形化刷机工具、eSIM 和集中多设备管理
+- 图形化刷机工具、eSIM、QDC507 通话链路和集中多设备管理
 
-语音通话已经完成只读可行性评估：当前硬件没有可供 Debian/macOS 使用的
-完整音频通路，现有 VoWiFi 路径也不适用于当前样机与 SIM，因此本项目正式
-放弃通话功能，不再把它列入后续版本计划。
+UFI103S 的语音通话已经完成只读可行性评估：当前硬件没有可供 Debian/macOS
+使用的完整音频通路，现有 VoWiFi 路径也不适用于当前样机与 SIM，因此正式放弃
+UFI 通话。QDC507 仅在模块报告 `VoLTE capability=1`，且 IMS、USB 音频、主机
+音频桥与 SIM 全部就绪后才允许拨号；当前 Release 只发布检测和安全门禁，不宣称
+通话链路已经验收。
 
 ## 从源码开发
 
@@ -353,6 +374,8 @@ unzip WiSiM-1.0.1-macos-universal.zip
 ```text
 config/                         设备网络、VoHive、SSH 与 systemd 配置
 host/macos/WangkaManager/       WiSiM macOS 源码与测试
+host/macos/WiSiMBridge/         QDC507 USB 状态、初始化与回滚桥
+host/ios/WiSiM/                 WiSiM iOS/iPadOS 源码与测试
 patches/                        固定上游版本使用的公开补丁
 scripts/                        镜像构建、刷机、恢复、部署与验证脚本
 tests/                          设备控制面自动化测试
